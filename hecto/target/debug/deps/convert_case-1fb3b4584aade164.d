@@ -1,0 +1,11 @@
+D:\Text_Editor_in_rust\Text-Editor-in-rust\hecto\target\debug\deps\convert_case-1fb3b4584aade164.d: C:\Users\Lenovo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\convert_case-0.7.1\src\lib.rs C:\Users\Lenovo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\convert_case-0.7.1\src\boundary.rs C:\Users\Lenovo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\convert_case-0.7.1\src\case.rs C:\Users\Lenovo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\convert_case-0.7.1\src\converter.rs C:\Users\Lenovo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\convert_case-0.7.1\src\pattern.rs
+
+D:\Text_Editor_in_rust\Text-Editor-in-rust\hecto\target\debug\deps\libconvert_case-1fb3b4584aade164.rlib: C:\Users\Lenovo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\convert_case-0.7.1\src\lib.rs C:\Users\Lenovo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\convert_case-0.7.1\src\boundary.rs C:\Users\Lenovo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\convert_case-0.7.1\src\case.rs C:\Users\Lenovo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\convert_case-0.7.1\src\converter.rs C:\Users\Lenovo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\convert_case-0.7.1\src\pattern.rs
+
+D:\Text_Editor_in_rust\Text-Editor-in-rust\hecto\target\debug\deps\libconvert_case-1fb3b4584aade164.rmeta: C:\Users\Lenovo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\convert_case-0.7.1\src\lib.rs C:\Users\Lenovo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\convert_case-0.7.1\src\boundary.rs C:\Users\Lenovo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\convert_case-0.7.1\src\case.rs C:\Users\Lenovo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\convert_case-0.7.1\src\converter.rs C:\Users\Lenovo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\convert_case-0.7.1\src\pattern.rs
+
+C:\Users\Lenovo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\convert_case-0.7.1\src\lib.rs:
+C:\Users\Lenovo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\convert_case-0.7.1\src\boundary.rs:
+C:\Users\Lenovo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\convert_case-0.7.1\src\case.rs:
+C:\Users\Lenovo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\convert_case-0.7.1\src\converter.rs:
+C:\Users\Lenovo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\convert_case-0.7.1\src\pattern.rs:
