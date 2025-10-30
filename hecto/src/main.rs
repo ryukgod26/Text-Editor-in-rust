@@ -1,9 +1,13 @@
+mod editor;
+use editor::Editor;
 use std::io::{self,Read};
 use crossterm::terminal::enable_raw_mode;
 use crossterm::terminal::disable_raw_mode;
 
 fn main() {
+    Editor::default().run();
 
+    /*
     enable_raw_mode().unwrap();
     for b in io::stdin().bytes(){
         // println!("{:?}",b);
@@ -18,5 +22,5 @@ fn main() {
             disable_raw_mode().unwrap();
             break;
         }
-    }
+    }*/
 }
