@@ -1,17 +1,22 @@
 use crossterm::event::{read,Event::Key,KeyEvent, KeyCode::Char,KeyModifiers};
-use crossterm::terminal::{disable_raw_mode,enable_raw_mode,Clear,ClearType};
-use std::io::out;
+mod terminal;
+use terminal::Terminal;
+
+
+
 
 pub struct Editor{
 should_quit : bool,
 }
 
 impl Editor {
-    pub fn default() -> Self {
-        Editor { should_quit: false }
+    pub const fn default() -> Self {
+        Self { should_quit: false }
     }
     pub fn run(&mut self) {
-        Self.intialize().unwrap();
+    
+        Twrminal::intialize()?;
+
         let result = self.repl();
         Self::terminate.unwrap();
         result.unwrap();
@@ -136,6 +141,15 @@ println!("Thanks For Using.\r\n");
 Ok(())
 }
 
+fn draw_rows(){
+let mut stdout = stdout();
+let columns,rows = size();
 
+execute!(stdout,MoveTo(0,0))?;
+for number in 0..rows{
+ print!("~\r\n");
+    }
+}
 
 }
+
