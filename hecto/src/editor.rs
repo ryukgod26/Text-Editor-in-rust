@@ -1,5 +1,5 @@
-use crossterm::event::{read,Event::Key,KeyEvent, KeyCode::Char,KeyModifiers};
 mod terminal;
+use crossterm::event::{read,Event,KeyModifiers,KeyCode::Char,Event::Key,KeyEvent};
 use terminal::Terminal;
 
 
@@ -16,7 +16,7 @@ impl Editor {
         Terminal::intialize().unwrap();
 
         let result = self.repl();
-        Terminal::terminate.unwrap();
+        Terminal::terminate().unwrap();
         result.unwrap();
         /*
         if let Err(err) = self.repl() {
@@ -44,7 +44,8 @@ impl Editor {
             }
     
      let event = read()?;
-     self.evaluate_event(&event);*/
+     self.evaluate_event(&event);
+     */
      self.refresh_screen()?;
 
 
@@ -100,8 +101,7 @@ if let Key(KeyEvent {
     code,
     modifiers,
     ..
-}) = event;
-
+}) = event{
 match code 
     {
     Char('q') if *modifiers == KeyModifiers::CONTROL =>{
@@ -109,6 +109,7 @@ match code
     },
     _=>(),
     }
+}
 
 }
 
@@ -119,22 +120,23 @@ Terminal::clear_screen()?;
 println!("Thanks For Using.\r\n");
 }else {
 Self::draw_rows()?;
-Terminal::move_to_cursor(0,0)?;
+Terminal::move_cursor_to(0,0)?;
 }
 
 Ok(())
 }
 
-fn draw_rows(){
+fn draw_rows() -> Result<(),std::io::Error>
+{
 
 let rows = Terminal::size()?.1;
 
 for row in 0..rows{
  print!("~");
- if row+1 < height{
-    print("\r\n");}
+ if row+1 < rows{
+    print!("\r\n");}
     }
+    Ok(())
 }
 
 }
-
