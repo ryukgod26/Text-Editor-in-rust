@@ -3,8 +3,6 @@ mod terminal;
 use terminal::Terminal;
 
 
-
-
 pub struct Editor{
 should_quit : bool,
 }
@@ -15,10 +13,10 @@ impl Editor {
     }
     pub fn run(&mut self) {
     
-        Twrminal::intialize()?;
+        Terminal::intialize().unwrap();
 
         let result = self.repl();
-        Self::terminate.unwrap();
+        Terminal::terminate.unwrap();
         result.unwrap();
         /*
         if let Err(err) = self.repl() {
@@ -26,24 +24,6 @@ impl Editor {
         }
         print!("Thanks For Using.\r\n");*/
     }
-    
-    fn intialize() -> Result<(),std::io::Error>
-    {
-    enable_raw_mode.unwrap()?;
-    Self::clear_screen()
-    }
-
-    fn terminate() -> Result<(),std::io::Error>
-    {
-    disable_raw_mode()
-    }
-
-    fn clear_screen() -> Result<(),std::io::Error>
-    {
-    let mut stdout = stdout();
-    execute!(stdout,Clear(ClearType::All))
-    }
-
     
 
     fn repl(&mut self) -> Result<(), std::io::Error> {
@@ -61,16 +41,18 @@ impl Editor {
                     }
                     _ => (),
                 }
-            }*/
+            }
     
      let event = read()?;
-     self.evaluate_event(&event);
+     self.evaluate_event(&event);*/
      self.refresh_screen()?;
 
 
             if self.should_quit {
                 break;
             }
+            let event = read()?;
+            self.evaluate_event(&event);
         }
         
         Ok(())
@@ -133,21 +115,24 @@ match code
 fn refresh_screen(&self) -> Result<(),std::io::Error>
 {
 if self.should_quit{
-Self::clear_screen()?;
+Terminal::clear_screen()?;
 println!("Thanks For Using.\r\n");
-
+}else {
+Self::draw_rows()?;
+Terminal::move_to_cursor(0,0)?;
 }
 
 Ok(())
 }
 
 fn draw_rows(){
-let mut stdout = stdout();
-let columns,rows = size();
 
-execute!(stdout,MoveTo(0,0))?;
-for number in 0..rows{
- print!("~\r\n");
+let rows = Terminal::size()?.1;
+
+for row in 0..rows{
+ print!("~");
+ if row+1 < height{
+    print("\r\n");}
     }
 }
 
