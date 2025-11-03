@@ -1,7 +1,8 @@
 mod terminal;
 use crossterm::event::{read,Event,KeyModifiers,KeyCode::Char,Event::Key,KeyEvent};
 use terminal::Terminal;
-
+use crossterm::cursor;
+use crossterm::io::{stdout,Write};
 
 pub struct Editor{
 should_quit : bool,
@@ -117,7 +118,8 @@ fn refresh_screen(&self) -> Result<(),std::io::Error>
 {
 if self.should_quit{
 Terminal::clear_screen()?;
-println!("Thanks For Using.\r\n");
+//println!("Thanks For Using.\r\n");
+queue!(stdout(),Print("Thanks For Using>\r\n"))?;
 }else {
 Self::draw_rows()?;
 Terminal::move_cursor_to(0,0)?;
@@ -132,9 +134,12 @@ fn draw_rows() -> Result<(),std::io::Error>
 let rows = Terminal::size()?.1;
 
 for row in 0..rows{
- print!("~");
+    Terminal::clear_current_line()?;
+//    print!("~");
+    queuw!(stdout(),Print("~"))?:
  if row+1 < rows{
-    print!("\r\n");}
+//    print!("\r\n");}
+    queue!(stdout(),Print("\r\n"));
     }
     Ok(())
 }
