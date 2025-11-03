@@ -1,6 +1,6 @@
 mod terminal;
 use crossterm::event::{read,Event,KeyModifiers,KeyCode::Char,Event::Key,KeyEvent};
-use terminal::Terminal;
+use terminal::{Terminal,Position,Size};
 use crossterm::cursor;
 use crossterm::io::{stdout,Write};
 
@@ -13,7 +13,7 @@ impl Editor {
         Self { should_quit: false }
     }
     pub fn run(&mut self) {
-    
+
         Terminal::intialize().unwrap();
 
         let result = self.repl();
@@ -116,30 +116,32 @@ match code
 
 fn refresh_screen(&self) -> Result<(),std::io::Error>
 {
+Terminal::hide_cursor()?;
 if self.should_quit{
 Terminal::clear_screen()?;
 //println!("Thanks For Using.\r\n");
-queue!(stdout(),Print("Thanks For Using>\r\n"))?;
+Terminal::print("Thanks For Using>\r\n")?;
 }else {
 Self::draw_rows()?;
-Terminal::move_cursor_to(0,0)?;
+Terminal::move_cursor_to(Position{x:0, y:0})?;
 }
-
+Terminal::show_cursor()?;
+Terminal::execute()?;
 Ok(())
 }
 
 fn draw_rows() -> Result<(),std::io::Error>
 {
 
-let rows = Terminal::size()?.1;
+let Size{rows,..} = Terminal::size()?;
 
 for row in 0..rows{
     Terminal::clear_current_line()?;
 //    print!("~");
-    queuw!(stdout(),Print("~"))?:
+    Terminal::print("~")?:
  if row+1 < rows{
 //    print!("\r\n");}
-    queue!(stdout(),Print("\r\n"));
+    Terminal::print("\r\n");
     }
     Ok(())
 }
