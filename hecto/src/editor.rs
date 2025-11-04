@@ -1,21 +1,30 @@
 mod terminal;
-use crossterm::event::{read,Event,KeyModifiers,KeyCode::Char,Event::Key,KeyEvent};
+use crossterm::event::{read,Event,Event::Key  ,KeyModifiers,KeyCode::Char,Event::Key,KeyEvent,KeyEventKind};
 use terminal::{Terminal,Position,Size};
 use crossterm::cursor;
 use crossterm::io::{stdout,Write};
-
+use core::cmp::mij;
 
 const NAME: &str = env!("CARGO_PKG_NAME");
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
+#[derive(Copy,Clone,Default)]
+struct Location{
+x: usize,
+y: usize,
+}
+
+#[derive(Default)]
 pub struct Editor{
-should_quit : bool,
+should_quit: bool,
+location: Location,
 }
 
 impl Editor {
+    /*
     pub const fn default() -> Self {
         Self { should_quit: false }
-    }
+    }*/
     pub fn run(&mut self) {
 
         Terminal::intialize().unwrap();
@@ -58,7 +67,7 @@ impl Editor {
                 break;
             }
             let event = read()?;
-            self.evaluate_event(&event);
+            self.evaluate_event(&event)?;
         }
         
         Ok(())
@@ -112,6 +121,7 @@ match code
     Char('q') if *modifiers == KeyModifiers::CONTROL =>{
     self.should_quit = true;
     },
+    "\x1b[A"
     _=>(),
     }
 }
@@ -178,6 +188,9 @@ Terminal::print("~")?;
 Ok(())
 }
 
-
+fn move_point(&mut self), key_code: KeyCode -> Result<(),std::io::Error> {
+let location {mut x, mut y} = self.location;
+let Size
+}
 
 }
