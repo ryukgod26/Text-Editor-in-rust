@@ -3,19 +3,21 @@ use crossterm::cursor::MoveTo;
 use std::io::{stdout,Write};
 //use crossterm::execute;
 use crossterm::cursor::{Hide,Show};
+use crossterm::{queue,Command};
+use core::fmt::Display;
 
 pub struct Terminal{}
 
 #[derive(Copy,Clone)]
 pub struct Size{
-width: u16,
-height: u16,
+width: usize,
+height: usize,
 }
 
 #[derive(Copy,Clone)]
 pub struct Position{
-x: u16,
-y: u16,
+x: usize,
+y: usize,
 }
 
 impl Terminal{
@@ -34,44 +36,54 @@ Ok(())
 }
 
 pub fn clear_screen() -> Result<(),std::io::Error>{
-queue!(stdout(),Clear(ClearType::All))?;
+Self::queue_command(stdout(),Clear(ClearType::All))?;
 Ok(())
 }
 
 pub fn clear_current_line() -> Result<(),std::io::Error>{
-queue!(stdout(),Clear(ClearType::CurrentLine)?;
+Self::queue_command(stdout(),Clear(ClearType::CurrentLine)?;
 Ok(())
 }
 
 
 pub fn move_cursor_to(position: Position) -> Result<(),std::io::Error>{
-queue!(stdout(),MoveTo(position.x, position.y))?;
+Self::queue_command(stdout(),MoveTo(position.x as u16, position.y as u16))?;
 Ok(())
 }
 
 pub fn size() -> Result<Size,std::io::Error>
 {
-let (width,height) = size()?;
+let (width_16,height_16) = size()?;
+#[allow(clippy::as_conversions)]
+let height = height_16 as usize;
+
+#[allow(clippy::as_conversions)]
+let width = width_16 as usize;
 Ok(Size{height, width})
 }
 
 pub fn hide_cursor() -> Result<(),std::io::Error>{
-queue!(stdout(),Hide)?;
+Self::queue_command(stdout(),Hide)?;
 Ok(())
 }
 
 pub fn show_cursor() -> Result<(),std::io::Error>{
-queue!(stdout(),Show)?;
+Self::queue_command(stdout(),Show)?;
 Ok(())
 }
 
-pub fn print(string: &str) -> Result<(),std::io::Error>{
-queue!(stdout(),Print(string))?;
+pub fn print<T:Display>(string:T) -> Result<(),std::io::Error>{
+Self::queue_command(Print(string))?;
 Ok(())
 }
 
 pub fn execute() -> Result<(),std::io::Error>{
 stdout().flush()?;
+Ok(())
+}
+
+fn queue_command<T:Command>(command:T) -> Result<(),std::io::Error>{
+queue!(stdout(),command)?;
 Ok(())
 }
 

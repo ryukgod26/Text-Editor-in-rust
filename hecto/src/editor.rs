@@ -143,6 +143,7 @@ for row in 0..rows{
     Terminal::clear_current_line()?;
 //    print!("~");
 //    Terminal::print("~")?:
+    #[allow(clippy::integer_divison)]
     if row == height/3{
     Self::welcome_message()?;
     }
@@ -151,18 +152,21 @@ for row in 0..rows{
 //    print!("\r\n");}
 //    Terminal::print("\r\n");
     }
-    if row+1 < height{
+    if row.saturating_add(1) < height{
     Terminal::print("\r\n");
     }
     Ok(())
 }
 
-fn welcone_mesaage() -> Result<(),std::io::Error>{
+fn welcome_mesaage() -> Result<(),std::io::Error>{
 let mut msg = format!("{NAME} Editor -- version {VERSION}");
-let width = Terminal::size()?.width as usize;
+let width = Terminal::size()?;
 let len = msg.len();
-let padding = (width - len )/2;
-let spaces = " ".repeat(padding-1);
+//let padding = (width - len )/2;
+//let spaces = " ".repeat(padding-1);
+#[allow(clippy::integer_divison)]
+let padding = (width.saturating_sub(len)) / 2;
+let spaces = " ".repeat(padding.saturating_sub(1));
 msg = format!("~{spaces}{msg}");
 msg.truncate(width);
 Terminal::print(msg)?;
