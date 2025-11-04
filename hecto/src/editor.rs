@@ -1,9 +1,9 @@
 mod terminal;
-use crossterm::event::{read,Event,Event::Key  ,KeyModifiers,KeyCode::Char,Event::Key,KeyEvent,KeyEventKind};
+use crossterm::event::{Event::{self, Key}, KeyCode::{self, Char}, KeyEvent, KeyEventKind, KeyModifiers, read};
 use terminal::{Terminal,Position,Size};
 use crossterm::cursor;
-use crossterm::io::{stdout,Write};
-use core::cmp::mij;
+use std::{fmt::Error, io::{Write, stdout}};
+use core::cmp::min;
 
 const NAME: &str = env!("CARGO_PKG_NAME");
 const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -109,7 +109,29 @@ _=>(),
 }
 */
 
-fn evaluate_event(&mut self,event:&Event)
+fn move_point(&mut self, key_code: KeyCode) ->Result<(),std::io::Error>
+{
+let Location { mut x, mut y} = self.location;
+let Size{ height,  width} = Terminal::size();
+match key_code {
+    KeyCode::Up =>{
+        y = y.saturating_sub(1);
+    },
+    KeyCode::Down =>{
+        y = (height.saturating_sub(1),y.saturating_add(1))
+    },
+    KeyCode::Right =>{
+        x = x.saturating_add(1);
+        
+    },
+    KeyCode::Left =>{
+        x = min(width.saturating_sub(1))
+    }
+}
+Ok(())
+}
+
+fn evaluate_event(&mut self,event:&Event) -> Result<(),std::io::Error>
 {
 if let Key(KeyEvent {
     code,
@@ -121,7 +143,6 @@ match code
     Char('q') if *modifiers == KeyModifiers::CONTROL =>{
     self.should_quit = true;
     },
-    "\x1b[A"
     _=>(),
     }
 }
@@ -167,10 +188,11 @@ for row in 0..rows{
     }
     Ok(())
 }
+}
 
 fn welcome_mesaage() -> Result<(),std::io::Error>{
 let mut msg = format!("{NAME} Editor -- version {VERSION}");
-let width = Terminal::size()?;
+let height = Terminal::size()?;
 let len = msg.len();
 //let padding = (width - len )/2;
 //let spaces = " ".repeat(padding-1);
@@ -188,9 +210,9 @@ Terminal::print("~")?;
 Ok(())
 }
 
-fn move_point(&mut self), key_code: KeyCode -> Result<(),std::io::Error> {
-let location {mut x, mut y} = self.location;
-let Size
-}
+// fn move_point(&mut self), key_code: KeyCode -> Result<(),std::io::Error> {
+// let location {mut x, mut y} = self.location;
+// let Size {}
+// }
 
 }
