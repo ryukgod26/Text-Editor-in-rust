@@ -47,7 +47,7 @@ Ok(())
 }
 
 
-pub fn move_cursor_to(position: Position) -> Result<(),std::io::Error>{
+pub fn move_caret_to(position: Position) -> Result<(),std::io::Error>{
 Self::queue_command(MoveTo(position.row as u16, position.col as u16))?;
 Ok(())
 }
@@ -63,12 +63,12 @@ let width = width_16 as usize;
 Ok(Size{height, width})
 }
 
-pub fn hide_cursor() -> Result<(),std::io::Error>{
+pub fn hide_caret() -> Result<(),std::io::Error>{
 Self::queue_command(Hide)?;
 Ok(())
 }
 
-pub fn show_cursor() -> Result<(),std::io::Error>{
+pub fn show_caret() -> Result<(),std::io::Error>{
 Self::queue_command(Show)?;
 Ok(())
 }
