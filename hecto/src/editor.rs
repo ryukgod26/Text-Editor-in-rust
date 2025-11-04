@@ -14,6 +14,8 @@ x: usize,
 y: usize,
 }
 
+pub struct View{}
+
 #[derive(Default)]
 pub struct Editor{
 should_quit: bool,
@@ -116,18 +118,32 @@ let Size{ height,  width} = Terminal::size();
 match key_code {
     KeyCode::Up =>{
         y = y.saturating_sub(1);
-    },
+    }
     KeyCode::Down =>{
         y = (height.saturating_sub(1),y.saturating_add(1))
-    },
-    KeyCode::Right =>{
-        x = x.saturating_add(1);
-        
-    },
-    KeyCode::Left =>{
-        x = min(width.saturating_sub(1))
     }
+    KeyCode::Right =>{
+        x = min(width.saturation_sub(1),x.saturating_add(1));
+        
+    }
+    KeyCode::Left =>{
+        x = width.saturating_sub(1)
+    }
+    KeyCode::PageUp =>{
+    y = 0;
+    }
+    KeyCode::PageDown =>{
+    y = height.saturating_sub(1);
+    }
+    KeyCode::Home =>{
+    x = 0;
+    }
+    KeyCode::End =>{
+    x = width.saturating_sub(1);
+    }
+    _ =>(),
 }
+self.location = Location{x,y};
 Ok(())
 }
 
@@ -136,13 +152,24 @@ fn evaluate_event(&mut self,event:&Event) -> Result<(),std::io::Error>
 if let Key(KeyEvent {
     code,
     modifiers,
+    Kind:KeyEventKind::Press,
     ..
 }) = event{
 match code 
     {
-    Char('q') if *modifiers == KeyModifiers::CONTROL =>{
+    KeyCode::Char('q') if *modifiers == KeyModifiers::CONTROL =>{
     self.should_quit = true;
     },
+    KeyCode::Up
+    | KeyCode::Down
+    | KeyCode::Right
+    | KeyCode::Left
+    | KeyCode::PageDown
+    | KeyCode::PageUp
+    | KeyCode::Home
+    | KeyCode::End =>{
+    self.move_code(*code)?;
+    }
     _=>(),
     }
 }
@@ -151,16 +178,20 @@ match code
 
 fn refresh_screen(&self) -> Result<(),std::io::Error>
 {
-Terminal::hide_cursor()?;
+Terminal::hide_caret()?;
+Terminal::move_caret_to(Position::default())?;
 if self.should_quit{
 Terminal::clear_screen()?;
 //println!("Thanks For Using.\r\n");
 Terminal::print("Thanks For Using>\r\n")?;
 }else {
 Self::draw_rows()?;
-Terminal::move_cursor_to(Position{x:0, y:0})?;
+Terminal::move_caret_to(Position{
+col: self.location.x,
+row: self.location.y,
+})?;
 }
-Terminal::show_cursor()?;
+Terminal::show_caret()?;
 Terminal::execute()?;
 Ok(())
 }
@@ -216,3 +247,12 @@ Ok(())
 // }
 
 }
+
+
+impl View{
+pub fn render(){
+
+
+}
+}
+
