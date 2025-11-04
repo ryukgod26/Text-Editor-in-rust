@@ -4,6 +4,10 @@ use terminal::{Terminal,Position,Size};
 use crossterm::cursor;
 use crossterm::io::{stdout,Write};
 
+
+const NAME: &str = env!("CARGO_PKG_NAME");
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+
 pub struct Editor{
 should_quit : bool,
 }
@@ -18,7 +22,7 @@ impl Editor {
 
         let result = self.repl();
         Terminal::terminate().unwrap();
-        result.unwrap();
+          result.unwrap();
         /*
         if let Err(err) = self.repl() {
             panic!("{err:#?}");
@@ -138,12 +142,38 @@ let Size{rows,..} = Terminal::size()?;
 for row in 0..rows{
     Terminal::clear_current_line()?;
 //    print!("~");
-    Terminal::print("~")?:
- if row+1 < rows{
+//    Terminal::print("~")?:
+    if row == height/3{
+    Self::welcome_message()?;
+    }
+    else{
+    Self::draw_empty_row()?;
 //    print!("\r\n");}
+//    Terminal::print("\r\n");
+    }
+    if row+1 < height{
     Terminal::print("\r\n");
     }
     Ok(())
 }
+
+fn welcone_mesaage() -> Result<(),std::io::Error>{
+let mut msg = format!("{NAME} Editor -- version {VERSION}");
+let width = Terminal::size()?.width as usize;
+let len = msg.len();
+let padding = (width - len )/2;
+let spaces = " ".repeat(padding-1);
+msg = format!("~{spaces}{msg}");
+msg.truncate(width);
+Terminal::print(msg)?;
+Ok(())
+}
+
+fn draw_empty_row() -> Result<(),std::io::Error>{
+Terminal::print("~")?;
+Ok(())
+}
+
+
 
 }
