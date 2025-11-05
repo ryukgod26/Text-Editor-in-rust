@@ -1,8 +1,6 @@
 mod terminal;
 use crossterm::event::{Event::{self, Key}, KeyCode::{self, Char}, KeyEvent, KeyEventKind, KeyModifiers, read};
 use terminal::{Terminal,Position,Size};
-use crossterm::cursor;
-use std::{fmt::Error, io::{Write, stdout}};
 use core::cmp::min;
 
 const NAME: &str = env!("CARGO_PKG_NAME");
@@ -114,20 +112,20 @@ _=>(),
 fn move_point(&mut self, key_code: KeyCode) ->Result<(),std::io::Error>
 {
 let Location { mut x, mut y} = self.location;
-let Size{ height,  width} = Terminal::size();
+let Size{ height,  width} = Terminal::size()?;
 match key_code {
     KeyCode::Up =>{
         y = y.saturating_sub(1);
     }
     KeyCode::Down =>{
-        y = (height.saturating_sub(1),y.saturating_add(1))
+        y = min(height.saturating_sub(1),y.saturating_add(1));
     }
     KeyCode::Right =>{
-        x = min(width.saturation_sub(1),x.saturating_add(1));
+        x = min(width.saturating_sub(1),x.saturating_add(1));
         
     }
     KeyCode::Left =>{
-        x = width.saturating_sub(1)
+        x = x.saturating_sub(1);
     }
     KeyCode::PageUp =>{
     y = 0;
@@ -152,14 +150,14 @@ fn evaluate_event(&mut self,event:&Event) -> Result<(),std::io::Error>
 if let Key(KeyEvent {
     code,
     modifiers,
-    Kind:KeyEventKind::Press,
+     kind:KeyEventKind::Press,
     ..
 }) = event{
 match code 
     {
     KeyCode::Char('q') if *modifiers == KeyModifiers::CONTROL =>{
     self.should_quit = true;
-    },
+    }
     KeyCode::Up
     | KeyCode::Down
     | KeyCode::Right
@@ -168,12 +166,12 @@ match code
     | KeyCode::PageUp
     | KeyCode::Home
     | KeyCode::End =>{
-    self.move_code(*code)?;
+    self.move_point(*code)?;
     }
     _=>(),
     }
 }
-
+Ok(())
 }
 
 fn refresh_screen(&self) -> Result<(),std::io::Error>
@@ -196,34 +194,27 @@ Terminal::execute()?;
 Ok(())
 }
 
-fn draw_rows() -> Result<(),std::io::Error>
-{
+  fn draw_rows() -> Result<(), std::io::Error> {
+        let Size { height, .. } = Terminal::size()?;
+        for current_row in 0..height {
+            Terminal::clear_current_line()?;
 
-let Size{rows,..} = Terminal::size()?;
+            #[allow(clippy::integer_division)]
+            if current_row == height / 3 {
+                Self::welcome_message()?;
+            } else {
+                Self::draw_empty_row()?;
+            }
+            if current_row.saturating_add(1) < height {
+                Terminal::print("\r\n")?;
+            }
+        }
+        Ok(())
+    }
 
-for row in 0..rows{
-    Terminal::clear_current_line()?;
-//    print!("~");
-//    Terminal::print("~")?:
-    #[allow(clippy::integer_divison)]
-    if row == height/3{
-    Self::welcome_message()?;
-    }
-    else{
-    Self::draw_empty_row()?;
-//    print!("\r\n");}
-//    Terminal::print("\r\n");
-    }
-    if row.saturating_add(1) < height{
-    Terminal::print("\r\n");
-    }
-    Ok(())
-}
-}
-
-fn welcome_mesaage() -> Result<(),std::io::Error>{
+fn welcome_message() -> Result<(),std::io::Error>{
 let mut msg = format!("{NAME} Editor -- version {VERSION}");
-let height = Terminal::size()?;
+let width = Terminal::size()?.width;
 let len = msg.len();
 //let padding = (width - len )/2;
 //let spaces = " ".repeat(padding-1);

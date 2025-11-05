@@ -11,14 +11,14 @@ pub struct Terminal{}
 
 #[derive(Copy,Clone)]
 pub struct Size{
-height: usize,
-width: usize,
+pub height: usize,
+pub width: usize,
 }
 
-#[derive(Copy,Clone)]
+#[derive(Copy,Clone,Default)]
 pub struct Position{
-col: usize,
-row: usize,
+pub col: usize,
+pub row: usize,
 }
 
 impl Terminal{
