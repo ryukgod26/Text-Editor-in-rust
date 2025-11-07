@@ -1,10 +1,10 @@
 mod terminal;
+mod view;
 use crossterm::event::{Event::{self, Key}, KeyCode::{self, Char}, KeyEvent, KeyEventKind, KeyModifiers, read};
 use terminal::{Terminal,Position,Size};
 use core::cmp::min;
+use view::View;
 
-const NAME: &str = env!("CARGO_PKG_NAME");
-const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[derive(Copy,Clone,Default)]
 struct Location{
@@ -12,7 +12,6 @@ x: usize,
 y: usize,
 }
 
-pub struct View{}
 
 #[derive(Default)]
 pub struct Editor{
@@ -113,34 +112,33 @@ fn move_point(&mut self, key_code: KeyCode) ->Result<(),std::io::Error>
 {
 let Location { mut x, mut y} = self.location;
 let Size{ height,  width} = Terminal::size()?;
-match key_code {
-    KeyCode::Up =>{
-        y = y.saturating_sub(1);
-    }
-    KeyCode::Down =>{
-        y = min(height.saturating_sub(1),y.saturating_add(1));
-    }
-    KeyCode::Right =>{
-        x = min(width.saturating_sub(1),x.saturating_add(1));
-        
-    }
-    KeyCode::Left =>{
-        x = x.saturating_sub(1);
-    }
-    KeyCode::PageUp =>{
-    y = 0;
-    }
-    KeyCode::PageDown =>{
-    y = height.saturating_sub(1);
-    }
-    KeyCode::Home =>{
-    x = 0;
-    }
-    KeyCode::End =>{
-    x = width.saturating_sub(1);
-    }
-    _ =>(),
-}
+ match key_code {
+            KeyCode::Up => {
+                y = y.saturating_sub(1);
+            }
+            KeyCode::Down => {
+                y = min(height.saturating_sub(1), y.saturating_add(1));
+            }
+            KeyCode::Left => {
+                x = x.saturating_sub(1);
+            }
+            KeyCode::Right => {
+                x = min(width.saturating_sub(1), x.saturating_add(1));
+            }
+            KeyCode::PageUp => {
+                y = 0;
+            }
+            KeyCode::PageDown => {
+                y = height.saturating_sub(1);
+            }
+            KeyCode::Home => {
+                x = 0;
+            }
+            KeyCode::End => {
+                x = width.saturating_sub(1);
+            }
+            _ => (),
+        }
 self.location = Location{x,y};
 Ok(())
 }
@@ -212,25 +210,7 @@ Ok(())
         Ok(())
     }
 
-fn welcome_message() -> Result<(),std::io::Error>{
-let mut msg = format!("{NAME} Editor -- version {VERSION}");
-let width = Terminal::size()?.width;
-let len = msg.len();
-//let padding = (width - len )/2;
-//let spaces = " ".repeat(padding-1);
-#[allow(clippy::integer_divison)]
-let padding = (width.saturating_sub(len)) / 2;
-let spaces = " ".repeat(padding.saturating_sub(1));
-msg = format!("~{spaces}{msg}");
-msg.truncate(width);
-Terminal::print(msg)?;
-Ok(())
-}
 
-fn draw_empty_row() -> Result<(),std::io::Error>{
-Terminal::print("~")?;
-Ok(())
-}
 
 // fn move_point(&mut self), key_code: KeyCode -> Result<(),std::io::Error> {
 // let location {mut x, mut y} = self.location;
@@ -238,12 +218,3 @@ Ok(())
 // }
 
 }
-
-
-impl View{
-pub fn render(){
-
-
-}
-}
-
