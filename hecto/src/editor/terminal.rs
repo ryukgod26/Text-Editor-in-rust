@@ -4,7 +4,6 @@ use std::io::{stdout,Write};
 //use crossterm::execute;
 use crossterm::cursor::{Hide,Show};
 use crossterm::{queue,Command};
-use core::fmt::Display;
 use crossterm::style::Print;
 
 pub struct Terminal{}
@@ -73,7 +72,7 @@ Self::queue_command(Show)?;
 Ok(())
 }
 
-pub fn print<T:Display>(string:T) -> Result<(),std::io::Error>{
+pub fn print(string: &str) -> Result<(),std::io::Error>{
 Self::queue_command(Print(string))?;
 Ok(())
 }
