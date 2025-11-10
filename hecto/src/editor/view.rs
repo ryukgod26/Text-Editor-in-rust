@@ -1,27 +1,41 @@
+mod buffer;
+use buffer::Buffer;
+
 use super::terminal::{Size,Terminal};
 
 const NAME: &str = env!("CARGO_PKG_NAME");
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-pub struct View;
+#[derive(Default)]
+pub struct View{
+    buffer:Buffer
+}
 
 impl View{
-    pub fn render() -> Result<(),std::io::Error>
+
+    pub fn render(&self) -> Result<(),std::io::Error>
     {
         let Size { height, .. } = Terminal::size()?;
-        Terminal::clear_current_line()?;
-        Terminal::print("Testing\r\n")?;
-        for row in 1..height{
+        // Terminal::clear_current_line()?;
+        // Terminal::print("Testing\r\n")?;
+
+        for row in 0..height{
+
             Terminal::clear_current_line()?;
-            #[allow(clippy::integer_division)]
-            if row == height/3{
-                Self::welcome_message()?;
-            }else{
-                Self::draw_empty_row()?;
-            }
-            if row.saturating_add(1) < height{
-                Terminal::print("\r\n")?;
-            }
+        if let Some(line) = self.buffer.lines.get(row){
+            Terminal::print(line)?;
+            Terminal::print("\r\n")?;
+            continue;
+        }
+            // #[allow(clippy::integer_division)]
+            // if row == height/3{
+            //     Self::welcome_message()?;
+            // }else{
+            //     Self::draw_empty_row()?;
+            // }
+            // if row.saturating_add(1) < height{
+            //     Terminal::print("\r\n")?;
+            // }
         }
         Ok(())
     }

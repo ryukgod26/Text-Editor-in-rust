@@ -17,6 +17,7 @@ y: usize,
 pub struct Editor{
 should_quit: bool,
 location: Location,
+view:View,
 }
 
 impl Editor {
@@ -181,7 +182,7 @@ Terminal::clear_screen()?;
 //println!("Thanks For Using.\r\n");
 Terminal::print("Thanks For Using>\r\n")?;
 }else {
-View::render()?;
+self.view.render()?;
 Terminal::move_caret_to(Position{
 col: self.location.x,
 row: self.location.y,
