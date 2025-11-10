@@ -22,7 +22,7 @@ fn main() {
             println!("Binary {0:0b} ASCII {0:#03} \r",b);
         } else{
             println!("Binary {0:0b} ASCII {0:#03} Character {1:#?}\r");
-        }
+         }
         if c == 'q'{
             disable_raw_mode().unwrap();
             break;

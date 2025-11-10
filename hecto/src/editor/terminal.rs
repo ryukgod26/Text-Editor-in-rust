@@ -47,7 +47,8 @@ Ok(())
 
 
 pub fn move_caret_to(position: Position) -> Result<(),std::io::Error>{
-Self::queue_command(MoveTo(position.row as u16, position.col as u16))?;
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
+Self::queue_command(MoveTo(position.col as u16, position.row as u16))?;
 Ok(())
 }
 

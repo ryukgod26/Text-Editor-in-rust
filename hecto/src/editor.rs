@@ -139,8 +139,8 @@ let Size{ height,  width} = Terminal::size()?;
             }
             _ => (),
         }
-self.location = Location{x,y};
-Ok(())
+        self.location = Location{x,y};
+        Ok(())
 }
 
 fn evaluate_event(&mut self,event:&Event) -> Result<(),std::io::Error>
@@ -181,7 +181,7 @@ Terminal::clear_screen()?;
 //println!("Thanks For Using.\r\n");
 Terminal::print("Thanks For Using>\r\n")?;
 }else {
-Self::draw_rows()?;
+View::render()?;
 Terminal::move_caret_to(Position{
 col: self.location.x,
 row: self.location.y,
@@ -192,23 +192,7 @@ Terminal::execute()?;
 Ok(())
 }
 
-  fn draw_rows() -> Result<(), std::io::Error> {
-        let Size { height, .. } = Terminal::size()?;
-        for current_row in 0..height {
-            Terminal::clear_current_line()?;
 
-            #[allow(clippy::integer_division)]
-            if current_row == height / 3 {
-                Self::welcome_message()?;
-            } else {
-                Self::draw_empty_row()?;
-            }
-            if current_row.saturating_add(1) < height {
-                Terminal::print("\r\n")?;
-            }
-        }
-        Ok(())
-    }
 
 
 

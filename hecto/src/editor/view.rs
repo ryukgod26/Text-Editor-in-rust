@@ -10,9 +10,9 @@ impl View{
     {
         let Size { height, .. } = Terminal::size()?;
         Terminal::clear_current_line()?;
-        Terminal::print("Test\r\n")?;
+        Terminal::print("Testing\r\n")?;
         for row in 1..height{
-            Terminal::clear_current_line();
+            Terminal::clear_current_line()?;
             #[allow(clippy::integer_division)]
             if row == height/3{
                 Self::welcome_message()?;
@@ -38,7 +38,7 @@ impl View{
     let spaces = " ".repeat(padding.saturating_sub(1));
     msg = format!("~{spaces}{msg}");
     msg.truncate(width);
-    Terminal::print(msg)?;
+    Terminal::print(&msg)?;
     Ok(())
     }
 
