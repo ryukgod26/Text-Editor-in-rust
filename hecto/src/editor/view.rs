@@ -15,10 +15,11 @@ impl View{
 
     pub fn render(&self) -> Result<(),std::io::Error>
     {
+
         let Size { height, .. } = Terminal::size()?;
         // Terminal::clear_current_line()?;
         // Terminal::print("Testing\r\n")?;
-
+        if !(self.buffer.is_empty()){
         for row in 0..height{
 
             Terminal::clear_current_line()?;
@@ -27,17 +28,29 @@ impl View{
             Terminal::print("\r\n")?;
             continue;
         }
-            // #[allow(clippy::integer_division)]
-            // if row == height/3{
-            //     Self::welcome_message()?;
-            // }else{
-            //     Self::draw_empty_row()?;
-            // }
-            // if row.saturating_add(1) < height{
-            //     Terminal::print("\r\n")?;
-            // }
+        }
+        }
+        else{
+            #[allow(clippy::integer_division)]
+            if row == height/3{
+                Self::welcome_message()?;
+             }else{
+                 Self::draw_empty_row()?;
+             }
+             if row.saturating_add(1) < height{
+                 Terminal::print("\r\n")?;
+             }
         }
         Ok(())
+    }
+
+    pub fn load(&mut self,filename: &str) -> Result<(),std::io::Error>{
+    let file_contents = std::fs::read_to_string(filename)?;
+    for line in file_contents.lines(){
+    self.buffer.lines.push(line)?;
+    self.buffer.lines.push("\r\n")?;
+    }
+    Ok(())
     }
 
     fn welcome_message() -> Result<(),std::io::Error>{
