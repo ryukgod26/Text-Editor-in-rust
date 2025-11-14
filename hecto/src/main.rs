@@ -11,7 +11,7 @@ use editor::Editor;
 
 
 fn main() {
-    Editor::default().run();
+    Editor::new().unwrap().run();
     /*
     enable_raw_mode().unwrap();
     for b in io::stdin().bytes(){

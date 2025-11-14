@@ -1,10 +1,10 @@
 mod terminal;
 mod view;
-use crossterm::event::{Event::{self, Key}, KeyCode::{self, Char}, KeyEvent, KeyEventKind, KeyModifiers, read};
+use crossterm::event::{Event, KeyCode::{self, Char}, KeyEvent, KeyEventKind, KeyModifiers, read};
 use terminal::{Terminal,Position,Size};
 use core::cmp::min;
 use view::View;
-
+use std::env,panic::{set_hook,take_hook};
 
 #[derive(Copy,Clone,Default)]
 struct Location{
@@ -13,7 +13,6 @@ y: usize,
 }
 
 
-#[derive(Default)]
 pub struct Editor{
 should_quit: bool,
 location: Location,
@@ -25,22 +24,28 @@ impl Editor {
     pub const fn default() -> Self {
         Self { should_quit: false }
     }*/
-    pub fn run(&mut self) {
 
-        Terminal::intialize().unwrap();
-
-        let result = self.repl();
-        Terminal::terminate().unwrap();
-          result.unwrap();
-        /*
-        if let Err(err) = self.repl() {
-            panic!("{err:#?}");
-        }
-        print!("Thanks For Using.\r\n");*/
+    pub fn new() -> Result<(),std::io::Error>{
+    let current = take_hook();
+    set_hook(Box::new(move|panic_info|{
+    let _ = Terminal::terminate();
+    current_hook(panic_info);
+    }));
+    Terminal::intialize()?;
+    let mut view = View::default();
+    let args: Vec<String> = env::args().collect();
+    if let Some(filename) = args.get(1){
+    view.load(filename)?;    
     }
-    
+    Ok(Self{
+        should_quit: false,
+        location: Location::default(),
+        view
+    })
+    }
 
-    fn repl(&mut self) -> Result<(), std::io::Error> {
+
+   pub fn run(&mut self){
 
         loop {
             /*
@@ -67,7 +72,16 @@ impl Editor {
                 break;
             }
             let event = read()?;
-            self.evaluate_event(&event)?;
+            match event{
+            Ok(event)=>
+            self.evaluate_event(event)?;,
+            Err(err)=>{
+        #[cfg(debug_assertions)]
+                {
+                panic!("Could not read event {err:?}");
+                }
+            }
+            }
         }
         
         Ok(())
@@ -109,10 +123,10 @@ _=>(),
 }
 */
 
-fn move_point(&mut self, key_code: KeyCode) ->Result<(),std::io::Error>
+fn move_point(&mut self, key_code: KeyCode)
 {
 let Location { mut x, mut y} = self.location;
-let Size{ height,  width} = Terminal::size()?;
+let Size{ height,  width} = Terminal::size().unwrap_or_default();
  match key_code {
             KeyCode::Up => {
                 y = y.saturating_sub(1);
@@ -144,19 +158,22 @@ let Size{ height,  width} = Terminal::size()?;
         Ok(())
 }
 
-fn evaluate_event(&mut self,event:&Event) -> Result<(),std::io::Error>
+#[allow(clippy::needless_pass_by_value)]
+fn evaluate_event(&mut self,event:&Event)
 {
-if let Key(KeyEvent {
+
+    match event{
+        Event::Key(KeyEvent{
     code,
-    modifiers,
-     kind:KeyEventKind::Press,
+    kind: KeyEventKind::Press,
+    mofifiers,
     ..
-}) = event{
-match code 
+        }) => match (code,modifiers) 
     {
-    KeyCode::Char('q') if *modifiers == KeyModifiers::CONTROL =>{
+        (KeyCode::Char('q'),KeyModifiers::CONTROL) =>{
     self.should_quit = true;
     }
+        (
     KeyCode::Up
     | KeyCode::Down
     | KeyCode::Right
@@ -164,32 +181,41 @@ match code
     | KeyCode::PageDown
     | KeyCode::PageUp
     | KeyCode::Home
-    | KeyCode::End =>{
-    self.move_point(*code)?;
+    | KeyCode::End, _,) =>{
+    self.move_point(code);
     }
-    _=>(),
+    _=>{}
+    },
+    Event::Resize(width_u16,height_u16) => {
+    #[allow(clippy::as_conversions)]
+    let height = height_u16 as usize;
+
+    #[allow(clippy::as_conversions)]
+    let width = width_u16 as usize;
+    self.view.resize(Size{height,width});
+
     }
+    _ => {}
 }
 Ok(())
 }
 
-fn refresh_screen(&self) -> Result<(),std::io::Error>
+fn refresh_screen(&self)
 {
-Terminal::hide_caret()?;
-Terminal::move_caret_to(Position::default())?;
+let _ = Terminal::hide_caret();
+self.view.render();
+/*
 if self.should_quit{
 Terminal::clear_screen()?;
 //println!("Thanks For Using.\r\n");
 Terminal::print("Thanks For Using>\r\n")?;
-}else {
-self.view.render()?;
-Terminal::move_caret_to(Position{
+}else {}*/
+let _ = Terminal::move_caret_to(Position{
 col: self.location.x,
 row: self.location.y,
-})?;
-}
-Terminal::show_caret()?;
-Terminal::execute()?;
+});
+let _ = Terminal::show_caret();
+let _ = Terminal::execute();
 Ok(())
 }
 
@@ -202,4 +228,14 @@ Ok(())
 // let Size {}
 // }
 
+}
+
+
+impl Drop for Editor{
+fn drop(&mut self){
+    let _ = Terminal::terminate();
+    if self.should_quit{
+    let _ = Terminal::print("Thanks For Using.\r\n");
+    }
+}
 }
