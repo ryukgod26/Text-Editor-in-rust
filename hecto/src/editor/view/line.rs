@@ -1,3 +1,4 @@
+use unicode_segmentation::UnicodeSegmentation;
 use std::{cmp,ops::Range};
 
 pub struct Linw{
@@ -20,7 +21,9 @@ impl Line{
     }
 
     pub fn len(&self) -> usize{
-    self.string.len()
+    //self.string.len()
+    let graphemes = self.string.graphemes(true).collect::<Vec<&str>>();
+    graphemes.len()
     }
 
 }
