@@ -3,15 +3,8 @@ mod view;
 use crossterm::event::{Event, KeyCode::{self, Char}, KeyEvent, KeyEventKind, KeyModifiers, read};
 use terminal::{Terminal,Position,Size};
 use core::cmp::min;
-use view::View;
+use view::{View,Location};
 use std::env,panic::{set_hook,take_hook};
-
-#[derive(Copy,Clone,Default)]
-struct Location{
-x: usize,
-y: usize,
-}
-
 
 pub struct Editor{
 should_quit: bool,
