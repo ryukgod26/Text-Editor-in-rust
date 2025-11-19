@@ -105,7 +105,7 @@ Ok(())
 pub fn print_row(row: usize,line_text: &str) -> Result<(),std::io::Error>{
 Self::move_caret_to(Position{row,col:0})?;
 Self::clear_current_line()?;
-Self::print(line_text);
+Self::print(line_text)?;
 Ok(())
 
 }

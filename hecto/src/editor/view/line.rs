@@ -1,7 +1,7 @@
 use unicode_segmentation::UnicodeSegmentation;
 use std::{cmp,ops::Range};
 
-pub struct Linw{
+pub struct Line{
 string: String
 }
 

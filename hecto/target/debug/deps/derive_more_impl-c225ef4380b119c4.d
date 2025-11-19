@@ -1,0 +1,9 @@
+D:\Text_Editor_in_rust\Text-Editor-in-rust\hecto\target\debug\deps\derive_more_impl-c225ef4380b119c4.d: C:\Users\Lenovo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\derive_more-impl-2.0.1\src\lib.rs C:\Users\Lenovo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\derive_more-impl-2.0.1\src\utils.rs C:\Users\Lenovo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\derive_more-impl-2.0.1\src\is_variant.rs C:\Users\Lenovo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\derive_more-impl-2.0.1\src\../README.md C:\Users\Lenovo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\derive_more-impl-2.0.1\src\../doc/is_variant.md
+
+D:\Text_Editor_in_rust\Text-Editor-in-rust\hecto\target\debug\deps\derive_more_impl-c225ef4380b119c4.dll: C:\Users\Lenovo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\derive_more-impl-2.0.1\src\lib.rs C:\Users\Lenovo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\derive_more-impl-2.0.1\src\utils.rs C:\Users\Lenovo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\derive_more-impl-2.0.1\src\is_variant.rs C:\Users\Lenovo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\derive_more-impl-2.0.1\src\../README.md C:\Users\Lenovo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\derive_more-impl-2.0.1\src\../doc/is_variant.md
+
+C:\Users\Lenovo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\derive_more-impl-2.0.1\src\lib.rs:
+C:\Users\Lenovo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\derive_more-impl-2.0.1\src\utils.rs:
+C:\Users\Lenovo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\derive_more-impl-2.0.1\src\is_variant.rs:
+C:\Users\Lenovo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\derive_more-impl-2.0.1\src\../README.md:
+C:\Users\Lenovo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\derive_more-impl-2.0.1\src\../doc/is_variant.md:
