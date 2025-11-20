@@ -21,10 +21,10 @@ pub struct View{
     scroll_offset: Position,
 }
 
-#[derive(Copy,Clone)]
+#[derive(Default,Copy,Clone)]
 pub struct Location{
-    pub graphene_index: usize,
-    pub libe_index: usize,
+    pub grapheme_index: usize,
+    pub line_index: usize,
 }
 
 impl View{
@@ -35,41 +35,31 @@ impl View{
     debug_assert!(result.is_ok(),"Failed to Remder Line");
     }
 
-    pub fn render(&mut self)
-    {
-
-        if !self.needs_redraw{
-        return;
+     pub fn render(&mut self) {
+        if !self.needs_redraw {
+            return;
         }
-
         let Size { height, width } = self.size;
-        if height==0 || width == 0{
-        return;
+        if height == 0 || width == 0 {
+            return;
         }
 
-        #[allow(clippy::integer_divison)]
+        #[allow(clippy::integer_division)]
         let vertical_center = height / 3;
-        let top = self.scroll_offset.y;
-
-        // Terminal::clear_current_line()?;
-        // Terminal::print("Testing\r\n")?;
-        for row in 0..height{
-        if let Some(line) = self.buffer.lines.get(row.saturating_add(top)){
-        let left = self.scroll_offset.x;
-        let right = self.scroll_offset.x.saturating_add(width);
-
-        Self::render_line(row,&line.get(left..right));
-        }
-        else if row == vertical_center && self.buffer.is_empty(){
-        Self::render_line(row,&Self::build_welcome_message(width));
-        }
-        else{
-        Self::render_line(row,"~");
-        }
-
+        let top = self.scroll_offset.row;
+        for current_row in 0..height {
+            if let Some(line) = self.buffer.lines.get(current_row.saturating_add(top)) {
+                let left = self.scroll_offset.col;
+                let right = self.scroll_offset.col.saturating_add(width);
+                Self::render_line(current_row, &line.get_visible_graphemes(left..right));
+            } else if current_row == vertical_center && self.buffer.is_empty() {
+                Self::render_line(current_row, &Self::build_welcome_message(width));
+            } else {
+                Self::render_line(current_row, "~");
+            }
         }
         self.needs_redraw = false;
-        }
+    }
 
 
     pub fn load(&mut self,filename: &str){
@@ -108,13 +98,13 @@ impl View{
         }
     }
 
-pub fn get_position(&self) -> Position{
-self.location.subtract(&self.scroll_offset).into()
-}
+// pub fn get_position(&self) -> Position{
+// self.location.subtract(&self.scroll_offset).into()
+// }
 
 fn resize(&mut self,to: Size){
 self.size = to;
-self.scroll_location_into_view();
+self.scroll_text_location_into_view();
 self.needs_redraw = true;
 }
 
@@ -124,7 +114,7 @@ fn scroll_vertically(&mut self,to: usize){
             self.scroll_offset.row = to;
             true
         } else if to >= self.scroll_offset.row.saturating_add(height){
-            self.scroll_offset.row = to.saturating_sub(height).saturatibg_add(1);
+            self.scroll_offset.row = to.saturating_sub(height).saturating_add(1);
             true
         }
         else{
@@ -156,13 +146,13 @@ fn scroll_text_location_into_view(&mut self){
 
 
 
-pub fn caret_position(&self) -> Positiom{
+pub fn caret_position(&self) -> Position{
     self.text_location_to_position().saturating_sub(self.scroll_offset)
     }
 
 fn text_location_to_position(&self) -> Position{
     let row = self.text_location.line_index;
-    let col = self.text_location.get(row).map_or(0,|line| {
+    let col = self.buffer.lines.get(row).map_or(0,|line| {
     line.width_until(self.text_location.grapheme_index)
     });
     Position {col,row}
@@ -174,8 +164,8 @@ let Size{ height,.. } = self.size;
 
 //The Boundary Checking happens after this match
 match direction{
-    Direction::Up => self.move_up(),
-    Direction::Down => self.move_down(),
+    Direction::Up => self.move_up(1),
+    Direction::Down => self.move_down(1),
     Direction::Left => self.move_left(),
     Direction::Right => self.move_right(),
     Direction::PageUp => self.move_up(height.saturating_sub(1)),
@@ -183,7 +173,7 @@ match direction{
     Direction::Home => self.move_to_start_of_line(),
     Direction::End => self.move_to_end_of_line(),
     }
-self.scroll_location_into_view();
+self.scroll_text_location_into_view();
 }
 
 fn move_up(&mut self,step: usize){
@@ -203,7 +193,7 @@ fn snap_to_valid_line(&mut self){
 
 fn snap_to_valid_grapheme(&mut self){
     self.text_location.grapheme_index = self.buffer.lines
-        .get(self.text_location_line_index).map_or(0,|line| {
+        .get(self.text_location.line_index).map_or(0,|line| {
     min(self.text_location.grapheme_index,line.grapheme_count())
         });
     }
@@ -220,7 +210,7 @@ self.text_location.grapheme_index = self.buffer.lines.get(self.text_location.lin
 fn move_left(&mut self) {
     if self.text_location.grapheme_index > 0{
         self.text_location.grapheme_index -= 1;
-        } else if self.text_location_line_index > 0{
+        } else if self.text_location.line_index > 0{
         self.move_up(1);
         self.move_to_end_of_line();
         }

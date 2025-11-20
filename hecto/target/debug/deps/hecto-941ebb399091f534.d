@@ -1,13 +1,12 @@
-D:\Text_Editor_in_rust\Text-Editor-in-rust\hecto\target\debug\deps\hecto-941ebb399091f534.d: src\main.rs src\editor.rs src\editor\terminal.rs src\editor\view.rs src\editor\view\buffer.rs src\editor\view\location.rs src\editor\view\line.rs src\editor\editorcommand.rs
+D:\Text_Editor_in_rust\Text-Editor-in-rust\hecto\target\debug\deps\hecto-941ebb399091f534.d: src\main.rs src\editor.rs src\editor\terminal.rs src\editor\view.rs src\editor\view\buffer.rs src\editor\view\line.rs src\editor\editorcommand.rs
 
-D:\Text_Editor_in_rust\Text-Editor-in-rust\hecto\target\debug\deps\libhecto-941ebb399091f534.rmeta: src\main.rs src\editor.rs src\editor\terminal.rs src\editor\view.rs src\editor\view\buffer.rs src\editor\view\location.rs src\editor\view\line.rs src\editor\editorcommand.rs
+D:\Text_Editor_in_rust\Text-Editor-in-rust\hecto\target\debug\deps\libhecto-941ebb399091f534.rmeta: src\main.rs src\editor.rs src\editor\terminal.rs src\editor\view.rs src\editor\view\buffer.rs src\editor\view\line.rs src\editor\editorcommand.rs
 
 src\main.rs:
 src\editor.rs:
 src\editor\terminal.rs:
 src\editor\view.rs:
 src\editor\view\buffer.rs:
-src\editor\view\location.rs:
 src\editor\view\line.rs:
 src\editor\editorcommand.rs:
 

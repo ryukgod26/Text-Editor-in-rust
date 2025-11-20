@@ -158,7 +158,7 @@ Terminal::clear_screen()?;
 //println!("Thanks For Using.\r\n");
 Terminal::print("Thanks For Using>\r\n")?;
 }else {}*/
-let _ = Terminal::move_caret_to(self.view.get_position());
+let _ = Terminal::move_caret_to(self.view.caret_position());
 let _ = Terminal::show_caret();
 let _ = Terminal::execute();
 }
