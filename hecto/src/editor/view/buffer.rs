@@ -1,6 +1,6 @@
 use std::fs::read_to_string;
 use super::line::Line;
-
+use super::Location;
 
 #[derive(Default)]
 pub struct Buffer{
@@ -24,5 +24,17 @@ Ok(Self{lines})
 pub fn height(&self) -> usize {
 self.lines.len()
 }
+
+pub fn insert_char(&mut self,character: char,at: Location){
+    if at.line_index > self.lines.len() {
+            return;
+        }
+    else if at.line_index == self.lines.len() {
+        self.lines.push(Line::from(&character.to_string()));
+        }
+    else if let Some(line) = self.lines.get_mut(at.line_index){
+            line.insert_char(character,at.grapheme_index);
+        }
+    }
 
 }
