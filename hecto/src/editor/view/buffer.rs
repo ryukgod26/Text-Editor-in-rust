@@ -1,10 +1,12 @@
-use std::fs::read_to_string;
+use std::fs::{File,read_to_string};
 use super::line::Line;
 use super::Location;
+use st::io::Write;
 
 #[derive(Default)]
 pub struct Buffer{
-    pub lines :Vec<Line>
+    pub lines :Vec<Line>,
+    filename: Option<String>,
 }
 
 impl Buffer{
@@ -13,12 +15,16 @@ self.lines.is_empty()
 }
 
 pub fn load(filename: &str) -> Result<Self,std::io::Error>{
+
 let contents = read_to_string(filename)?;
 let mut lines = Vec::new();
 for line in contents.lines(){
     lines.push(Line::from(line));
 }
-Ok(Self{lines})
+Ok(Self{
+    lines,
+    Some(filename.to_string()),
+    })
 }
 
 pub fn height(&self) -> usize {
@@ -61,4 +67,13 @@ pub fn insert_newline(&mut self,at: Location){
 
     }
 
+pub fn save(&self) -> Result<(),std::io::Error>{
+    if let Some(filename) = &self.filename{
+        let mut File = File::create(filename)?;
+        for line in &self.lines{
+                writeln!(file,"{line}")?;
+            }
+        }
+    Ok(())
+    }
 }
