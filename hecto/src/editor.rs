@@ -1,5 +1,9 @@
 mod terminal;
 mod view;
+mod statusbar;
+mod documentstatus;
+mod fileinfo;
+
 use crossterm::event::{Event, KeyEvent, KeyEventKind, read};
 use terminal::Terminal;
 mod editorcommand;
@@ -9,10 +13,17 @@ use std::
     env,panic::{set_hook,take_hook}
 };
 use editorcommand::EditorCommand;
+use statusbar::StatusBar;
+use documentstatus::DocumentStatus;
+
+pub const NAME: &str = env!("CARGO_PKG_NAME");
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub struct Editor{
 should_quit: bool,
 view:View,
+status_bar: StatusBar,
+title: String,
 }
 
 impl Editor {
@@ -28,19 +39,31 @@ impl Editor {
     current_hook(panic_info);
     }));
     Terminal::intialize()?;
-    let mut view = View::default();
+    let mut editor = Self{
+        should_quit: false,
+        view: View::new(2),
+        status_bar: StatusBar::new(1),
+        title: String::new(),
+    };
     let args: Vec<String> = env::args().collect();
     if let Some(filename) = args.get(1){
-    view.load(filename);    
+    editor.view.load(filename);    
     }
-    Ok(Self{
-        should_quit: false,
-        view
-    })
+    editor.refresh_status();
+    Ok(editor)
     }
 
+    pub fn refresh_status(&mut self){
+    let status = self.view.get_status();
+    let title = format!("{} - {NAME}",status.filename);
+    self.status_bar.update_status(status);
 
-   pub fn run(&mut self){
+    if title != self.title && matches!(Terminal::set_title(&title),Ok(())){
+        self.title = title;
+        }
+    }
+
+    pub fn run(&mut self){
 
         loop {
             /*
@@ -77,6 +100,8 @@ impl Editor {
                 }
             }
             }
+            let status = self.view.get_status();
+            self.status_bar.update_status(status);
         }
         
     }
@@ -128,30 +153,25 @@ fn evaluate_event(&mut self,event:Event)
             Event::Resize(_, _) => true,
             _ => false,
         };
-
-        if should_process {
-            match EditorCommand::try_from(event) {
-                Ok(command) => {
-                    if matches!(command, EditorCommand::Quit) {
-                        self.should_quit = true;
-                    } else {
-                        self.view.handle_command(command);
-                    }
-                }
-                Err(err) => {
-                    #[cfg(debug_assertions)]
-                    {
-                        panic!("Could not handle command: {err}");
-                    }
+    if should_process {
+    if let Ok(command) = EditorCommand::try_from(event) {
+            if matches!(command, EditorCommand::Quit){
+                self.should_quit = true;
+            } else {
+                self.view.handle_command(command);
+                if let EditorCommand::Resize(size) = command{
+                    self.status_bar.resize(size);
                 }
             }
-        } 
+        }
+    } 
 }
 
 fn refresh_screen(&mut self)
 {
 let _ = Terminal::hide_caret();
 self.view.render();
+self.status_bar.render();
 /*
 if self.should_quit{
 Terminal::clear_screen()?;

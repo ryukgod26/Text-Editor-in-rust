@@ -7,6 +7,7 @@ use self::line::Line;
 use super::{
     editorcommand::{Direction,EditorCommand},
     terminal::{Position,Size,Terminal},
+    DocumentStatus,  NAME, VERSION
 };
 
 const NAME: &str = env!("CARGO_PKG_NAME");
@@ -19,6 +20,7 @@ pub struct View{
     size: Size,
     text_location: Location,
     scroll_offset: Position,
+    margin_bottom: usize,
 }
 
 #[derive(Default,Copy,Clone)]
@@ -29,14 +31,27 @@ pub struct Location{
 
 impl View{
 
+    pub fn new(margin_bottom: usize) -> Self{
+        let terminal_size = Terminal::size().unwrap_or_default();
+        Self{
+            buffer: Buffer::default(),
+            needs_redraw: true,
+            size: Size{
+                width: terminal_size.width,
+                height: terminal_size.height.saturating_sub(margin_bottom),
+            },
+            text_location: Location::default(),
+            scroll_offset: Position::default(),
+        }
+    }
 
     fn render_line(at: usize,line_text: &str){
     let result = Terminal::print_row(at,line_text);
     debug_assert!(result.is_ok(),"Failed to Remder Line");
     }
 
-     pub fn render(&mut self) {
-        if !self.needs_redraw {
+    pub fn render(&mut self) {
+        if !self.needs_redraw || self.size.height == 0{
             return;
         }
         let Size { height, width } = self.size;
@@ -69,21 +84,17 @@ impl View{
         }
     }
 
-     fn build_welcome_message(width: usize) -> String {
+    fn build_welcome_message(width: usize) -> String {
         if width == 0 {
-            return " ".to_string();
+            String::new()
         }
         let welcome_message = format!("{NAME} editor -- version {VERSION}");
         let len = welcome_message.len();
-        if width <= len {
+        let remain_width = width.saturating_sub(1);
+        if remain_width < len {
             return "~".to_string();
         }
-        #[allow(clippy::integer_division)]
-        let padding = (width.saturating_sub(len).saturating_sub(1)) / 2;
-
-        let mut full_message = format!("~{}{}", " ".repeat(padding), welcome_message);
-        full_message.truncate(width);
-        full_message
+        format!("{:<1}{:^remain_width$}","~",welcome_message)
     }
 
     pub fn handle_command(&mut self,command: EditorCommand){
@@ -92,9 +103,12 @@ impl View{
                 self.resize(size),
             EditorCommand::Move(direction) =>
                 self.move_text_location(&direction),
-            EditorCommand::Quit =>
-            {}
-    
+            EditorCommand::Quit => {},
+            EditorCommand::Insert(Char) => self.insert_char(Char),
+            EditorCommand::Backspace => self.backspace(),
+            EditorCommand::Delete => self.delete(),
+            EditorCommand::Enter => self.insert_newline(),
+            EditorCommand::Save => self.save_file_to_disk(),
         }
     }
 
@@ -102,8 +116,23 @@ impl View{
 // self.location.subtract(&self.scroll_offset).into()
 // }
 
+fn insert_char(&mut self,character: char){
+let old_len = self.buffer.lines.get(self.text_location.line_index).map_or(0,Line::grapheme_count);
+self.buffer.insert_char(character,self.text_location);
+let new_len = self.buffer.lines.get(self.text_location.line_index).map_or(0,Line::grapheme_count);
+let grapheme_sub = new_len.saturating_sub(old_len);
+if grapheme_sub > 0{
+self.move_text_location(Direction::Right);
+}
+self.needs_redraw = true;
+
+}
+
 fn resize(&mut self,to: Size){
-self.size = to;
+self.size = Size{
+    width: to.width,
+    height: to.height.saturating_sub(self.margin_bottom),
+};
 self.scroll_text_location_into_view();
 self.needs_redraw = true;
 }
@@ -159,7 +188,7 @@ fn text_location_to_position(&self) -> Position{
     }   
 
 #[allow(clippy::arithnetic_side_effects)]
-fn move_text_location(&mut self,direction: &Direction){
+fn move_text_location(&mut self,direction: Direction){
 let Size{ height,.. } = self.size;
 
 //The Boundary Checking happens after this match
@@ -222,23 +251,44 @@ let line_width = self.buffer.lines.get(self.text_location.line_index)
     .map_or(0,Line::grapheme_count);
 if self.text_location.grapheme_index < line_width{
     self.text_location.grapheme_index += 1;
-    }
+   }
 else{
     self.move_to_start_of_line();
     self.move_down(1);
     }
 }
 
+fn delete(&mut self){
+    self.buffer.delete(self.text_location);
+    self.needs_redraw = true;
+    }
+
+fn backspace(&mut self){
+    if self.text_location.line_index != 0 || self.text_location.grapheme_index != 0 {
+//    self.move_left();
+        self.move_text_location(Direction::Left);
+        self.delete();
+        }
+    }
+
+fn insert_newline(&mut self){
+    self.buffer.insert_newline(self.text_location);
+    self.move_text_location(Direction::Right);
+    self.needs_redraw = true;
+    } 
+
+fn save_file_to_disk(&mut self){
+let _ = self.buffer.save();
 }
 
-impl Default for View{
-fn default() -> Self{
-Self{
-    buffer: Buffer::default(),
-    needs_redraw: true,
-    size: Terminal::size().unwrap_or_default(),
-    text_location: Location::default(),
-    scroll_offset: Position::default(),
+pub fn get_status(&self) -> DocumentStatus{
+    DocumentStatus{
+        total_lines: self.buffer.height(),
+        current_line_index: self.text_location.line_index,
+        filename: format!("{}",self.buffer.fileinfo),
+        is_modified: self.buffer.dirty,
+    }
+    }
+
 }
-}
-}
+

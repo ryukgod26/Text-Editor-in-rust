@@ -3,6 +3,7 @@ use std::convert::TryFrom;
 
 use super::terminal::Size;
 
+#[derive(Copy,Clone)]
 pub enum Direction {
     PageUp,
     PageDown,
@@ -13,12 +14,20 @@ pub enum Direction {
     Right,
     Down,
 }
+
+#[derive(Copy,Clone)]
 pub enum EditorCommand {
     Move(Direction),
     Resize(Size),
+    Insert(Char),
     Quit,
+    Backspace,
+    Delete,
+    Enter,
+    Save,
 }
 
+#[allow(clippy::as_conversions)]
 impl TryFrom<Event> for EditorCommand {
     type Error = String;
     fn try_from(event: Event) -> Result<Self, Self::Error> {
@@ -27,6 +36,7 @@ impl TryFrom<Event> for EditorCommand {
                 code, modifiers, ..
             }) => match (code, modifiers) {
                 (KeyCode::Char('q'), KeyModifiers::CONTROL) => Ok(Self::Quit),
+                (KeyCode::Char(character),KeyModifiers::None | KeyModifiers::SHIFT)  => Ok(Self::Insert(Char)),
                 (KeyCode::Up, _) => Ok(Self::Move(Direction::Up)),
                 (KeyCode::Down, _) => Ok(Self::Move(Direction::Down)),
                 (KeyCode::Left, _) => Ok(Self::Move(Direction::Left)),
@@ -35,6 +45,11 @@ impl TryFrom<Event> for EditorCommand {
                 (KeyCode::PageUp, _) => Ok(Self::Move(Direction::PageUp)),
                 (KeyCode::Home, _) => Ok(Self::Move(Direction::Home)),
                 (KeyCode::End, _) => Ok(Self::Move(Direction::End)),
+                (KeyCode::Backspace,_) => Ok(Self::Backspace),
+                (KeyCode::Delete,_) => Ok(Self::Delete),
+                (KeyCode::Tab,_) => Ok(Self::Insert("\t")),
+                (KeyCode::Enter) => Ok(Self::Enter),
+                (KeyCode::Char('s'), KeyModifiers::CONTROL) => Ok(Self::Save),
                 _ => Err(format!("Key Code not supported: {code:?}")),
             },
             Event::Resize(width_u16, height_u16) => {

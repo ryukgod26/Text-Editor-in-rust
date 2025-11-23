@@ -1,10 +1,10 @@
-use crossterm::terminal::{size,disable_raw_mode,enable_raw_mode,Clear,ClearType,EnterAlternateScreen,LeaveAlternateScreen};
+use crossterm::terminal::{size,disable_raw_mode,enable_raw_mode,Clear,ClearType,EnterAlternateScreen,LeaveAlternateScreen,DisableLineWrap,setTitle,EnableLineWrap};
 use crossterm::cursor::MoveTo;
 use std::io::{stdout,Write};
 //use crossterm::execute;
 use crossterm::cursor::{Hide,Show};
 use crossterm::{queue,Command};
-use crossterm::style::Print;
+use crossterm::style::{Attribute, Print};
 
 pub struct Terminal{}
 
@@ -33,6 +33,7 @@ Ok(())
 pub fn terminate() -> Result<(),std::io::Error>{
 Self::leave_alternate_screen()?;
 Self::show_caret()?;
+Self::enable_line_wrap()?;
 Self::execute()?;
 disable_raw_mode()?;
 Ok(())
@@ -108,6 +109,26 @@ Self::clear_current_line()?;
 Self::print(line_text)?;
 Ok(())
 
+}
+
+pub fn disable_line_wrap() -> Result<(),std::io::Error>{
+    Self::queue_command(DisableLineWrap)?;
+    Ok(())
+}
+
+pub fn enable_line_wrap() -> Result<(),std::io::Error>{
+    Self::queue_command(EnableLineWrap)?;
+    Ok(())
+}
+
+pub fn set_title(title: &str) -> Result<(),std::io::Error>{
+    Self::queue_command(SetTitle(title))?;
+    Ok(())
+}
+
+pub fn print_inverted_row(row: usize, line_str:&str) -> Result<(),std::io::Error>{
+    let width = Terminal::size()?.width;
+    Self::print_row(row,&format!("{}{:width$.width$}{}",Attribute::Reverse,line_text,Attribute::Reset))
 }
 
 }

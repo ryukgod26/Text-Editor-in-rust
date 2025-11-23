@@ -2,11 +2,12 @@ use std::fs::{File,read_to_string};
 use super::line::Line;
 use super::Location;
 use st::io::Write;
+use crate::editor::fileinfo::FileInfo;
 
 #[derive(Default)]
 pub struct Buffer{
     pub lines :Vec<Line>,
-    pub filename: Option<String>,
+    pub file_info: FileInfo,
     pub dirty: bool,
 }
 
@@ -24,7 +25,7 @@ for line in contents.lines(){
 }
 Ok(Self{
     lines,
-    Some(filename.to_string()),
+    file_info: FileInfo::from(filename),
     dirty: false,
     })
 }
@@ -76,8 +77,8 @@ pub fn insert_newline(&mut self,at: Location){
     }
 
 pub fn save(&mut self) -> Result<(),std::io::Error>{
-    if let Some(filename) = &self.filename{
-        let mut File = File::create(filename)?;
+    if let Some(path) = &self.file_info.path{
+        let mut File = File::create(path)?;
         for line in &self.lines{
                 writeln!(file,"{line}")?;
             }
@@ -85,4 +86,4 @@ pub fn save(&mut self) -> Result<(),std::io::Error>{
         }
     Ok(())
     }
-}
+
