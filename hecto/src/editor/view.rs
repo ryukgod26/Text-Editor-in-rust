@@ -5,7 +5,7 @@ use buffer::Buffer;
 use std::cmp::min;
 use self::line::Line;
 use super::{
-    editorcommand::{Direction,EditorCommand},
+    editorcommand::{Edit,Move},
     terminal::{Position,Size,Terminal},
     DocumentStatus,  NAME, VERSION,
     uicomponent::UIComponent,
@@ -40,11 +40,11 @@ impl View{
 
 
 
-    pub fn load(&mut self,filename: &str){
-    if let Ok(buffer) = Buffer::load(filename) {
+    pub fn load(&mut self,filename: &str) -> Result<(),std::io::Error>{
+            let buffer = Buffer::load(filename)?;
             self.buffer = buffer;
             self.mark_redraw(true);
-        }
+            Ok(())
     }
 
     fn build_welcome_message(width: usize) -> String {
@@ -60,18 +60,12 @@ impl View{
         format!("{:<1}{:^remain_width$}","~",welcome_message)
     }
 
-    pub fn handle_command(&mut self,command: EditorCommand){
+    pub fn handle_edit_command(&mut self,command: Edit){
     match command {
-            EditorCommand::Resize(_) => 
-                {},
-            EditorCommand::Move(direction) =>
-                self.move_text_location(&direction),
-            EditorCommand::Quit => {},
-            EditorCommand::Insert(Char) => self.insert_char(Char),
-            EditorCommand::Backspace => self.backspace(),
-            EditorCommand::Delete => self.delete(),
-            EditorCommand::Enter => self.insert_newline(),
-            EditorCommand::Save => self.save_file_to_disk(),
+            Edit::Insert(Char) => self.insert_char(Char),
+            Edit::Backspace => self.backspace(),
+            Edit::Delete => self.delete(),
+            Edit::Enter => self.insert_newline(),
         }
     }
 
@@ -79,13 +73,27 @@ impl View{
 // self.location.subtract(&self.scroll_offset).into()
 // }
 
+    pub fn handle_move_command(&mut self, command: Move){
+        let Size{height,..} = self.size;
+        match command{
+            Move::Up => self.move_up(1),
+            Move::Down => self.move_down(1),
+            Move::Left => self.move_left(),
+            Move::Right => self.move_right(),
+            Move::PageUp => self.move_up(height.saturating_sub(1)),
+            Move::PageDown => self.move_down(height.saturating_sub(1)),
+            Move::Home => self.move_to_start_of_line(),
+            Move::End => self.move_to_end_of_line(),
+        }
+        self.move_text_location_into_view();
+    }
 fn insert_char(&mut self,character: char){
 let old_len = self.buffer.lines.get(self.text_location.line_index).map_or(0,Line::grapheme_count);
 self.buffer.insert_char(character,self.text_location);
 let new_len = self.buffer.lines.get(self.text_location.line_index).map_or(0,Line::grapheme_count);
 let grapheme_sub = new_len.saturating_sub(old_len);
 if grapheme_sub > 0{
-self.move_text_location(Direction::Right);
+self.handle_move_command(Direction::Right);
 }
 self.mark_redraw(true);
 
@@ -224,19 +232,19 @@ fn delete(&mut self){
 fn backspace(&mut self){
     if self.text_location.line_index != 0 || self.text_location.grapheme_index != 0 {
 //    self.move_left();
-        self.move_text_location(Direction::Left);
+        self.handle_move_command(Direction::Left);
         self.delete();
         }
     }
 
 fn insert_newline(&mut self){
     self.buffer.insert_newline(self.text_location);
-    self.move_text_location(Direction::Right);
+    self.handle_move_command(Direction::Right);
     self.mark_redraw(true);
     } 
 
-fn save_file_to_disk(&mut self){
-let _ = self.buffer.save();
+pub fn save_file_to_disk(&mut self) -> Result<(),std::io::Error>{
+    self.buffer.save()
 }
 
 pub fn get_status(&self) -> DocumentStatus{
