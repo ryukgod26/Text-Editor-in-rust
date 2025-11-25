@@ -1,10 +1,10 @@
 use crossterm::event::{Event, KeyCode::{
-    Backspace, Char, Delete, Dowm, Up, Right, Left, Enter, PageUp, PageDown, Home, End, Tab
+    self,Backspace, Char, Delete, Dowm, Up, Right, Left, Enter, PageUp, PageDown, Home, End, Tab
 }
     , KeyEvent, KeyModifiers};
 use std::convert::TryFrom;
 
-use super::terminal::Size;
+use super::Size;
 
 
 
@@ -36,6 +36,7 @@ pub enum System{
     Save,
     Resize(Size),
     Quit,
+    Dismiss,
 }
 
 #[derive(Copy,Clone)]
@@ -111,7 +112,9 @@ impl TryFrom<Event> for System{
                 Char('s') => Ok(Self::Save),
                 _ => Err(format!("Unsupported Control + {code:?}")),
             }
-        } else{
+        }else if modifiers == KeyModifiers::NONE && matches(code,KeyCode::Esc){
+            Ok(Self::Dismiss)
+        }else{
 
             Err(format!("Unsupported Key Code {event.code:?} or modifier {event    .modifier:?}"))
         }

@@ -1,8 +1,8 @@
 use std::fs::{File,read_to_string};
-use super::line::Line;
+use super::Line;
 use super::Location;
 use st::io::Write;
-use crate::editor::fileinfo::FileInfo;
+use super::FileInfo;
 
 #[derive(Default)]
 pub struct Buffer{
@@ -76,14 +76,33 @@ pub fn insert_newline(&mut self,at: Location){
 
     }
 
-pub fn save(&mut self) -> Result<(),std::io::Error>{
-    if let Some(path) = &self.file_info.path{
-        let mut File = File::create(path)?;
-        for line in &self.lines{
+    pub fn save(&mut self) -> Result<(),std::io::Error>{
+        self.save_to_file(&self.fileinfo)?;
+        self.dirty = false;
+        Ok(())
+    }
+    
+    fn save_to_file(&self, fileinfo: &FileInfo) -> Result<(),std::io::Error>{
+        if let Some(filepath) = &fileinfo.get_path() {
+            let mut file = File::create(filepath)?;
+
+            for line in &self.lines{
                 writeln!(file,"{line}")?;
             }
-        self.dirty = false;
+
         }
-    Ok(())
     }
 
+    pub fn save_as(&mut self, filename: &str) -> Result<(),std::io::Error>{
+        let fileinfo = FileInfo::from(filename);
+        self.save_to_file(fileinfo)?;
+        self.fileinfo = fileinfo;
+        self.dirty = false;
+        Ok(())
+    }
+
+    pub const fn is_file_loaded(&self) -> bool{
+        self.fileinfo.has_path()
+    }
+
+}

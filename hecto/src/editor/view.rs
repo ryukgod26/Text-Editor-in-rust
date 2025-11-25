@@ -1,15 +1,15 @@
 mod buffer;
-mod line;
+mod fileinfo;
 
 use buffer::Buffer;
 use std::cmp::min;
-use self::line::Line;
 use super::{
     editorcommand::{Edit,Move},
-    terminal::{Position,Size,Terminal},
+    Position,Size,Terminal,
     DocumentStatus,  NAME, VERSION,
-    uicomponent::UIComponent,
+    UIComponent,
 };
+use fileinfor::FileInfo;
 
 const NAME: &str = env!("CARGO_PKG_NAME");
 const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -45,6 +45,10 @@ impl View{
             self.buffer = buffer;
             self.mark_redraw(true);
             Ok(())
+    }
+
+    pub const fn is_file_loaded(&self) -> bool{
+        self.buffer.is_file_loaded()
     }
 
     fn build_welcome_message(width: usize) -> String {
@@ -247,6 +251,10 @@ pub fn save_file_to_disk(&mut self) -> Result<(),std::io::Error>{
     self.buffer.save()
 }
 
+pub fn save_as(&mut self, filename: &str) -> Result<(),std::io::Error>{
+    self.buffer.save_as(filename)
+}
+
 pub fn get_status(&self) -> DocumentStatus{
     DocumentStatus{
         total_lines: self.buffer.height(),
@@ -273,17 +281,17 @@ impl UIComponent for View{
         self.scroll_text_location_into_view();
     }
 
-    fn draw(&mut self,origin_y: usize) -> Result<(),std::io::Error>{
+    fn draw(&mut self,origin_row: usize) -> Result<(),std::io::Error>{
     
         let Size { height, width } = self.size;
-        let end_y = origin_y.saturating_add(height);
+        let end_y = origin_row.saturating_add(height);
         
         #[allow(clippy::integer_divison)]
         let top_third = height / 3;
         let scroll_top = self.scroll_offset.row;
         
-        for current_row in origin_y..end_y{
-            let line_index = current_row.saturating_sub(origin_y).saturating_add(scroll_top);
+        for current_row in origin_row..end_y{
+            let line_index = current_row.saturating_sub(origin_row).saturating_add(scroll_top);
             if let Some(line) = self.buffer.lines.get(line_index) {
                 let left = self.scroll_offset.col;
                 let right = self.scroll_offset.col.saturating_add(width);

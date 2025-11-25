@@ -5,20 +5,9 @@ use std::io::{stdout,Write};
 use crossterm::cursor::{Hide,Show};
 use crossterm::{queue,Command};
 use crossterm::style::{Attribute, Print};
+use super::{Size,Position};
 
 pub struct Terminal{}
-
-#[derive(Default,Copy,Clone,Eq,PartialEq)]
-pub struct Size{
-pub height: usize,
-pub width: usize,
-}
-
-#[derive(Copy,Clone,Default)]
-pub struct Position{
-pub col: usize,
-pub row: usize,
-}
 
 impl Terminal{
 pub fn intialize() -> Result<(),std::io::Error>{
@@ -134,20 +123,3 @@ pub fn print_inverted_row(row: usize, line_str:&str) -> Result<(),std::io::Error
 }
 
 
-impl Position{
-
-// pub const fn saturating_add(&self,other: Self) -> Self{
-//     Self{
-//         col: self.col.saturating_add(other.col),
-//         row: self.row.saturating_add(other.row),
-//         }
-//     }
-
-pub const fn saturating_sub(&self,other: Self) -> Self{
-    Self{
-        col: self.col.saturating_sub(other.col),
-        row: self.row.saturating_sub(other.row),
-        }
-    }
-
-}

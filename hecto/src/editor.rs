@@ -2,9 +2,12 @@ mod terminal;
 mod view;
 mod statusbar;
 mod documentstatus;
-mod fileinfo;
+mod line;
 mod messagebar;
 mod uicomponent;
+mod commandbar;
+mod position;
+mod size;
 
 use crossterm::event::{Event, KeyEvent, KeyEventKind, read};
 use terminal::Terminal;
@@ -18,12 +21,17 @@ use editorcommand::EditorCommand;
 use statusbar::StatusBar;
 use documentstatus::DocumentStatus;
 use uicomponenet::UIComponent;
-use self::{
-    command::{
+use self::command::{
         Command::{Command,Edit,Move,System},
-        System::{Quit,Resize,Save},
-    },
-    messagebar::MessageBar,terminal::Size};
+        Edit::Enter,
+        System::{Dismiss,Quit,Resize,Save},
+};
+use commandbar::CommandBar;
+use line::Line;
+use messagebar::MessageBar;
+use position::Position;
+use size::Size;
+
 
 pub const NAME: &str = env!("CARGO_PKG_NAME");
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -38,6 +46,7 @@ title: String,
 mesaage_bar: MessageBar,
 terminal_size: Size,
 quit_times: u8,
+command_bar: Option<CommandBar>,
 }
 
 impl Editor {
@@ -173,26 +182,86 @@ fn evaluate_event(&mut self,event:Event)
 
 fn process_command(&mut self,command: Command){
     match command{
-        System(Quit) => self.handle_quit(),
+        System(Quit) => {
+            if self.command_bar.is_none(){
+                self.handle_quit();
+            }
+        },
         Systen(Resize(size)) => self.resize(size),
         _ => self.reset_quit_times(),
     }
 
     match command{
         System(Quit | Resize(_)) => {},
-        System(Save) => self.handle_save(),
-        Edit(edit_command) => self.view.handle_edit_command(edit_command),
-        Move(move_command) => self.view.handle_move_command(move_command),
+        System(Save) => {
+            if self.command_bar.is_none(){
+                self.handle_save()
+                }
+        }
+        System(Dismiss) => {
+            if self.command_bar.is_some(){
+                self.dismiss_prompt();
+                self.message_bar.update_message("Save Aborted");
+            }
+        }
+        Edit(edit_command) => {
+            if let Some(command_bar) = &mut self.command_bar{
+                if matches!(edit_command, Enter){
+                    let filename = command_bar.value();
+                    self.dismiss_prompt();
+                    self.save(Some(&filename));
+                } else {
+                    command_bar.handle_edit_command(edit_command)
+                }
+            }else{
+            self.view.handle_edit_command(edit_command)
+            }
+        },
+        Move(move_command) => {
+            if self.command_bar.is_none(){
+            self.view.handle_move_command(move_command)
+            }
+        },
     }
 }
 
+fn dismiss_prompt(&mut self){
+    self.command_bar = None;
+    self.message_bar.mark_redraw(true);
+}
+
+fn show_prompt(&mut self) {
+    let mut command_bar = CommandBar::default();
+    command_bar.set_prompt("Save as");
+    command_bar.resize(Size{
+        height: 1,
+        width: self.terminal_size.width,
+    });
+    command_bar.mark_redraw(true);
+    self.command_bar = Some(command_bar);
+
+}
+
 fn handle_save(&mut self){
-    if self.view.save().is_ok(){
-        self.message_bar.update_message("File saved successfully.");
+    if self.view.is_file_loaded(){
+        self.save(None);
     }else{
-        self.message_bar.update_message("Error writing file!");
+        self.show_prompt();
     }
 
+}
+
+fn save(&mut self, filename: Option<&str>) {
+    let result = if let Some(name) = filename{
+        self.view.save_as(name)
+    } else{
+        self.view.save()
+    };
+    if result.is_ok(){
+        self.message_bar.update_message("File saved successfully.");
+    }else{
+        self.message_bar.update_message("Error writing file!!!");
+    }
 }
 
 #[allow(clippy::arithmetic_side_effects))]
@@ -217,22 +286,41 @@ fn refresh_screen(&mut self)
 if self.terminal_size.width == 0 || self.terminal_size.height == 0{
     return;
 }
-
+let bottom_bar_row = self.terminal_size.heighr.saturating_sub(1);
 let _ = Terminal::hide_caret();
-self.message_bar.render(self.terminal_size.height.saturating_sub(1));
+//self.message_bar.render(self.terminal_size.height.saturating_sub(1));
+if let Some(command_bar) = &mut self.command_bar{
+command_bar.render(bottom_bar_row);
+}else{
+    self.message_bar.render(bottom_bar_row);
+}
+
+
 if self.terminal_size.height > 1{
     self.status_bar.render(self.terminal_size.height.saturating_sub(2));
 }
 if self.terminal_size.height > 2{
     self.view.render(0);
 }
+
+let new_caret_pos = if let Some(command_bar) = &self.command_bar{
+    Position{
+        row: bottom_bar_row,
+        col: command_bar.caret_position_col(),
+    }
+}else{
+    self.view.caret_position()
+};
+
+
 /*
 if self.should_quit{
 Terminal::clear_screen()?;
 //println!("Thanks For Using.\r\n");
 Terminal::print("Thanks For Using>\r\n")?;
 }else {}*/
-let _ = Terminal::move_caret_to(self.view.caret_position());
+
+let _ = Terminal::move_caret_to(new_caret_pos);
 let _ = Terminal::show_caret();
 let _ = Terminal::execute();
 }
@@ -253,6 +341,12 @@ fn resize(&mut self, size: Size){
         height: 1,
         width: size.width,
     });
+    if let Some(command_bar) = &mut self.command_bar{
+        command_bar.resize(Size{
+            height: 1,
+            width: size.width,
+        });
+    }
 }
 
 

@@ -1,5 +1,5 @@
 use super ::{
-    termibal::{Size,Terminal},
+    Size,Terminal,
     uicomponent::UIComponent,
 };
 use std::time::{Instant,Duration};
