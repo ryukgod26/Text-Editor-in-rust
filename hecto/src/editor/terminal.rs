@@ -14,6 +14,7 @@ pub fn initialize() -> Result<(),std::io::Error>{
 enable_raw_mode()?;
 Self::enter_alternate_screen()?;
 Self::clear_screen()?;
+Self::disable_line_wrap()?;
 // Self::move_cursor_to(Position{x: 0,y: 0 })?;
 Self::execute()?;
 Ok(())
