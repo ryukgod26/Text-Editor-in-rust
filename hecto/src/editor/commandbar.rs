@@ -1,5 +1,5 @@
 use std::cmp::min;
-use super::{command::Edit, Line, Size, Terminal, UIComponent};
+use super::{editorcommand::Edit, Line, Size, Terminal, UIComponent};
 
 #[derive(Default)]
 pub struct CommandBar{
@@ -13,14 +13,14 @@ impl CommandBar{
     pub fn handle_edit_command(&mut self,command: Edit){
         match command{
             Edit::Insert(character) => self.value.append_char(character),
-            Edit::Delete || Edit::Enter => {},
+            Edit::Delete | Edit::Enter => {},
             Edit::Backspace => self.value.delete_last(),
         }
         self.mark_redraw(true);
     }
 
     pub fn caret_position_col(&self) -> usize{
-        let max_width = self.prompt.len(),saturating_add(self.value.grapheme_count());
+        let max_width = self.prompt.len().saturating_add(self.value.grapheme_count());
         min(max_width,self.size.width)
     }
 
@@ -50,7 +50,7 @@ impl UIComponent for CommandBar{
         let area_for_value = self.size.width.saturating_sub(self.prompt.len());
         let value_end = self.value.width();
         let value_start = value_end.saturating_sub(area_for_value);
-        let message = format!("{}{}",self.prompt,self.value.get_visible_graphemes(value_start..value_end);
+        let message = format!("{}{}",self.prompt,self.value.get_visible_graphemes(value_start..value_end));
         let to_print = if message.len() <= self.size.width {
             message
         }else{

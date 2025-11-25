@@ -2,17 +2,17 @@ mod buffer;
 mod fileinfo;
 
 use buffer::Buffer;
-use std::cmp::min;
+use std::{cmp::min, fmt::Error};
 use super::{
     editorcommand::{Edit,Move},
     Position,Size,Terminal,
     DocumentStatus,  NAME, VERSION,
-    UIComponent,
+    UIComponent,Line
 };
-use fileinfor::FileInfo;
+use fileinfo::FileInfo;
 
-const NAME: &str = env!("CARGO_PKG_NAME");
-const VERSION: &str = env!("CARGO_PKG_VERSION");
+// const NAME: &str = env!("CARGO_PKG_NAME");
+// const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[derive(Default)]
 pub struct View{
@@ -33,9 +33,8 @@ impl View{
 
     
 
-    fn render_line(at: usize,line_text: &str){
-    let result = Terminal::print_row(at,line_text);
-    debug_assert!(result.is_ok(),"Failed to Remder Line");
+    fn render_line(at: usize,line_text: &str) -> Result<(),std::io::Error>{
+    Terminal::print_row(at,line_text)
     }
 
 
@@ -53,7 +52,7 @@ impl View{
 
     fn build_welcome_message(width: usize) -> String {
         if width == 0 {
-            String::new()
+            String::new();
         }
         let welcome_message = format!("{NAME} editor -- version {VERSION}");
         let len = welcome_message.len();
@@ -89,7 +88,7 @@ impl View{
             Move::Home => self.move_to_start_of_line(),
             Move::End => self.move_to_end_of_line(),
         }
-        self.move_text_location_into_view();
+        self.scroll_text_location_into_view();
     }
 fn insert_char(&mut self,character: char){
 let old_len = self.buffer.lines.get(self.text_location.line_index).map_or(0,Line::grapheme_count);
@@ -97,7 +96,7 @@ self.buffer.insert_char(character,self.text_location);
 let new_len = self.buffer.lines.get(self.text_location.line_index).map_or(0,Line::grapheme_count);
 let grapheme_sub = new_len.saturating_sub(old_len);
 if grapheme_sub > 0{
-self.handle_move_command(Direction::Right);
+self.handle_move_command(Move::Right);
 }
 self.mark_redraw(true);
 
@@ -158,19 +157,19 @@ fn text_location_to_position(&self) -> Position{
     }   
 
 #[allow(clippy::arithnetic_side_effects)]
-fn move_text_location(&mut self,direction: Direction){
+fn move_text_location(&mut self,direction: Move){
 let Size{ height,.. } = self.size;
 
 //The Boundary Checking happens after this match
 match direction{
-    Direction::Up => self.move_up(1),
-    Direction::Down => self.move_down(1),
-    Direction::Left => self.move_left(),
-    Direction::Right => self.move_right(),
-    Direction::PageUp => self.move_up(height.saturating_sub(1)),
-    Direction::PageDown => self.move_down(height.saturating_sub(1)),
-    Direction::Home => self.move_to_start_of_line(),
-    Direction::End => self.move_to_end_of_line(),
+    Move::Up => self.move_up(1),
+    Move::Down => self.move_down(1),
+    Move::Left => self.move_left(),
+    Move::Right => self.move_right(),
+    Move::PageUp => self.move_up(height.saturating_sub(1)),
+    Move::PageDown => self.move_down(height.saturating_sub(1)),
+    Move::Home => self.move_to_start_of_line(),
+    Move::End => self.move_to_end_of_line(),
     }
 self.scroll_text_location_into_view();
 }
@@ -236,14 +235,14 @@ fn delete(&mut self){
 fn backspace(&mut self){
     if self.text_location.line_index != 0 || self.text_location.grapheme_index != 0 {
 //    self.move_left();
-        self.handle_move_command(Direction::Left);
+        self.handle_move_command(Move::Left);
         self.delete();
         }
     }
 
 fn insert_newline(&mut self){
     self.buffer.insert_newline(self.text_location);
-    self.handle_move_command(Direction::Right);
+    self.handle_move_command(Move::Right);
     self.mark_redraw(true);
     } 
 

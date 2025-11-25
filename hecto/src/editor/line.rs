@@ -60,7 +60,7 @@ impl Line{
 
     pub fn get_visible_graphemes(&self,range: Range<usize> )-> String{
     if range.start >= range.end{
-        String::new();
+        return String::new();
         }
         let mut result = String::new();
         let mut current_pos = 0;
@@ -107,7 +107,7 @@ impl Line{
             }).sum()
     }
 
-    fn str_to_fragnents(line_str: &str) -> Vec<TextFragment>{
+    fn str_to_fragments(line_str: &str) -> Vec<TextFragment>{
         line_str.graphemes(true)
             .map(|grapheme| {
                 let (replacement,rendered_width) = Self::replacement_character(grapheme) .map_or_else( || {
@@ -125,14 +125,14 @@ impl Line{
                     rendered_width,
                     replacement,
                 }
-            }).collect();
+            }).collect()
         }
 
     pub fn width(&self) -> usize{
         self.width_until(self.grapheme_count())
     }
 
-    pub fn append_char(&mut self, charater: char){
+    pub fn append_char(&mut self, character: char){
         self.insert_char(character, self.grapheme_count());
     }
 
@@ -143,8 +143,8 @@ impl Line{
     pub fn insert_char(&mut self,character: char,at: usize){
         let mut result = String::new();
 
-        for (indux,fragment) in self.fragments.iter().enumerate(){
-            if index == grapheme_index {
+        for (index,fragment) in self.fragments.iter().enumerate(){
+            if index == at {
                 result.push(character);
                 }
             result.push_str(&fragment.grapheme);
@@ -174,7 +174,7 @@ impl Line{
 
     pub fn split(&mut self,at: usize) -> Self{
         if at > self.fragments.len(){
-            Self::deafult()
+            return Self::default();
         }
         let remainder = self.fragments.split_off(at);
         Self{
@@ -186,7 +186,7 @@ impl Line{
 
 impl fmt::Display for Line{
     fn fmt(&self,formatter: &mut fmt::Formatter) -> fmt::Result{
-        let result: String = self.fragment.iter()
+        let result: String = self.fragments.iter()
             .map(|fragment| fragment.grapheme.clone())
             .collect();
         write!(formatter,"{result}")

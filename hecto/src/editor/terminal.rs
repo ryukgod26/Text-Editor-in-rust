@@ -1,4 +1,4 @@
-use crossterm::terminal::{size,disable_raw_mode,enable_raw_mode,Clear,ClearType,EnterAlternateScreen,LeaveAlternateScreen,DisableLineWrap,setTitle,EnableLineWrap};
+use crossterm::terminal::{Clear, ClearType, DisableLineWrap, EnableLineWrap, EnterAlternateScreen, LeaveAlternateScreen, SetTitle, disable_raw_mode, enable_raw_mode, size};
 use crossterm::cursor::MoveTo;
 use std::io::{stdout,Write};
 //use crossterm::execute;
@@ -10,7 +10,7 @@ use super::{Size,Position};
 pub struct Terminal{}
 
 impl Terminal{
-pub fn intialize() -> Result<(),std::io::Error>{
+pub fn initialize() -> Result<(),std::io::Error>{
 enable_raw_mode()?;
 Self::enter_alternate_screen()?;
 Self::clear_screen()?;
@@ -117,7 +117,7 @@ pub fn set_title(title: &str) -> Result<(),std::io::Error>{
 
 pub fn print_inverted_row(row: usize, line_str:&str) -> Result<(),std::io::Error>{
     let width = Terminal::size()?.width;
-    Self::print_row(row,&format!("{}{:width$.width$}{}",Attribute::Reverse,line_text,Attribute::Reset))
+    Self::print_row(row,&format!("{}{:width$.width$}{}",Attribute::Reverse,line_str,Attribute::Reset))
 }
 
 }

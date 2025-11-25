@@ -17,12 +17,11 @@ use std::
 {
     env,panic::{set_hook,take_hook}
 };
-use editorcommand::EditorCommand;
 use statusbar::StatusBar;
 use documentstatus::DocumentStatus;
-use uicomponenet::UIComponent;
-use self::command::{
-        Command::{Command,Edit,Move,System},
+use uicomponent::UIComponent;
+use self::editorcommand::{
+        Command::{self,Edit,Move,System},
         Edit::Enter,
         System::{Dismiss,Quit,Resize,Save},
 };
@@ -43,7 +42,7 @@ should_quit: bool,
 view:View,
 status_bar: StatusBar,
 title: String,
-mesaage_bar: MessageBar,
+message_bar: MessageBar,
 terminal_size: Size,
 quit_times: u8,
 command_bar: Option<CommandBar>,
@@ -55,26 +54,34 @@ impl Editor {
         Self { should_quit: false }
     }*/
 
-    pub fn new() -> Result<Self,std::io::Error>{
-    let current_hook = take_hook();
-    set_hook(Box::new(move|panic_info|{
-    let _ = Terminal::terminate();
-    current_hook(panic_info);
-    }));
-    Terminal::intialize()?;
-    let mut editor = Self::default();
-    let size = Terminal::size().unwrap_or_default();
-    editor.resize(size);
-    editor.message_bar.update_message("HELP: Ctrl+S = Save | Ctrl+Q = Quit");
-    let args: Vec<String> = env::args().collect();
-    if let Some(filename) = args.get(1){
-    editor.view.load(filename).is_err(){
-        editor.message_bar.update_message(&format!("Error: Could not open file {filename}"))
+     pub fn new() -> Result<Self, std::io::Error> {
+        let current_hook = take_hook();
+        set_hook(Box::new(move |panic_info| {
+            let _ = Terminal::terminate();
+            current_hook(panic_info);
+        }));
+        Terminal::initialize()?;
+
+        let mut editor = Self::default();
+        let size = Terminal::size().unwrap_or_default();
+        editor.resize(size);
+        editor
+            .message_bar
+            .update_message("HELP: Ctrl-S = save and Ctrl-Q = quit");
+
+        let args: Vec<String> = env::args().collect();
+        if let Some(file_name) = args.get(1) {
+            if editor.view.load(file_name).is_err() {
+                editor
+                    .message_bar
+                    .update_message(&format!("Error: Could not open file: {file_name}"));
+            }
+        }
+
+        editor.refresh_status();
+        Ok(editor)
     }
-    }
-    editor.refresh_status();
-    Ok(editor)
-    }
+
 
     pub fn refresh_status(&mut self){
     let status = self.view.get_status();
@@ -175,9 +182,10 @@ fn evaluate_event(&mut self,event:Event)
             _ => false,
         };
     if should_process {
-    if let Ok(command) = EditorCommand::try_from(event) {
+    if let Ok(command) = Command::try_from(event) {
             self.process_command(command);
     }           
+}
 }
 
 fn process_command(&mut self,command: Command){
@@ -187,7 +195,7 @@ fn process_command(&mut self,command: Command){
                 self.handle_quit();
             }
         },
-        Systen(Resize(size)) => self.resize(size),
+        System(Resize(size)) => self.resize(size),
         _ => self.reset_quit_times(),
     }
 
@@ -255,7 +263,7 @@ fn save(&mut self, filename: Option<&str>) {
     let result = if let Some(name) = filename{
         self.view.save_as(name)
     } else{
-        self.view.save()
+        self.view.save_file_to_disk()
     };
     if result.is_ok(){
         self.message_bar.update_message("File saved successfully.");
@@ -264,7 +272,7 @@ fn save(&mut self, filename: Option<&str>) {
     }
 }
 
-#[allow(clippy::arithmetic_side_effects))]
+#[allow(clippy::arithmetic_side_effects)]
 fn handle_quit(&mut self){ 
     if !self.view.get_status().is_modified || self.quit_times + 1 == QUIT_TIMES{
         self.should_quit = true;
@@ -286,7 +294,7 @@ fn refresh_screen(&mut self)
 if self.terminal_size.width == 0 || self.terminal_size.height == 0{
     return;
 }
-let bottom_bar_row = self.terminal_size.heighr.saturating_sub(1);
+let bottom_bar_row = self.terminal_size.height.saturating_sub(1);
 let _ = Terminal::hide_caret();
 //self.message_bar.render(self.terminal_size.height.saturating_sub(1));
 if let Some(command_bar) = &mut self.command_bar{
@@ -357,7 +365,6 @@ fn resize(&mut self, size: Size){
 // }
 
 }
-
 
 impl Drop for Editor{
 fn drop(&mut self){

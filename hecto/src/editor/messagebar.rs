@@ -20,11 +20,11 @@ pub struct MessageBar{
 
 impl MessageBar{
     pub fn update_message(&mut self, new_message: &str){
-        self.message = Message{
+        self.current_message = Message{
             text: new_message.to_string(),
             time: Instant::now(),
         };
-        self.cleared_after_enquiry = false;
+        self.cleared_after_expiry = false;
         self.mark_redraw(true);
     }
 }
@@ -40,8 +40,17 @@ impl UIComponent for MessageBar{
 
     fn set_size(&mut self, _: Size) {}
 
-    fn draw(&mut self, origin: usize) -> Result<(),std::io::Error>{
-        Terminal::print_row(origin,&self.current_message)
+    fn draw(&mut self, origin: usize) -> Result<(), std::io::Error> {
+        if self.current_message.is_expired() {
+            self.cleared_after_expiry = true; // Upon expiration, we need to write out "" once to clear the message. To avoid clearing more than necessary, we  keep track of the fact that we've already cleared the expired message once.
+        }
+        let message = if self.current_message.is_expired() {
+            ""
+        } else {
+            &self.current_message.text
+        };
+
+        Terminal::print_row(origin, message)
     }
 }
 

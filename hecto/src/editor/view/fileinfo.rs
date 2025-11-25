@@ -1,7 +1,7 @@
 use std::{
     fmt::{self,Display},
     path::{Path,PathBuf},
-}
+};
 
 #[derive(Default,Debug)]
 pub struct FileInfo{
@@ -25,9 +25,9 @@ impl FileInfo{
 }
 
 impl Display for FileInfo{
-    fn fmt(&self, formatter: &mut fmt::Formatter<`_>) -> fmt::Result{
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result{
         let name = self.get_path()
-        .and_then(|path| path.filename())
+        .and_then(|path| path.file_name())
         .and_then(|name| name.to_str())
         .unwrap_or("[No Name]");
         write!(formatter,"{name}")

@@ -1,5 +1,5 @@
 use crossterm::event::{Event, KeyCode::{
-    self,Backspace, Char, Delete, Dowm, Up, Right, Left, Enter, PageUp, PageDown, Home, End, Tab
+    self,Backspace, Char, Delete, Down, Up, Right, Left, Enter, PageUp, PageDown, Home, End, Tab,Esc
 }
     , KeyEvent, KeyModifiers};
 use std::convert::TryFrom;
@@ -21,9 +21,9 @@ pub enum Move{
 }
 
 
-#[derive((Copy,Clone)]
+#[derive(Copy,Clone)]
 pub enum Edit{
-    Insert(Char),
+    Insert(char),
     Backspace,
     Delete,
     Enter,
@@ -31,7 +31,7 @@ pub enum Edit{
 }
 
 
-#[derive((Copy,Clone)]
+#[derive(Copy,Clone)]
 pub enum System{
     Save,
     Resize(Size),
@@ -47,43 +47,36 @@ pub enum Command{
 }
 
 #[allow(clippy::as_conversions)]
-impl TryFrom<Event> for Move {
+impl TryFrom<KeyEvent> for Move {
     type Error = String;
-    fn try_from(event: Event) -> Result<Self, Self::Error> {
+    fn try_from(event: KeyEvent) -> Result<Self, Self::Error> {
         let KeyEvent {
-            code, modifiers,..
+            code, modifiers, ..
         } = event;
+
         if modifiers == KeyModifiers::NONE {
             match code {
                 Up => Ok(Self::Up),
                 Down => Ok(Self::Down),
-                Right => Ok(Self::Right),
                 Left => Ok(Self::Left),
-                PageUp => Ok(Self::PageUp),
+                Right => Ok(Self::Right),
                 PageDown => Ok(Self::PageDown),
+                PageUp => Ok(Self::PageUp),
                 Home => Ok(Self::Home),
                 End => Ok(Self::End),
-                _ => Err(format!("UnSupported code: {code:?}")),
+                _ => Err(format!("Unsupported code: {code:?}")),
             }
-            } else {
-                Err(format!("UnSupported Key Code {code:?} or Modifier {modifier:?}"))
-        }
-            Event::Resize(width_u16, height_u16) => {
- 
-                #[allow(clippy::as_conversions)]
-                let height = height_u16 as usize;
-
-                #[allow(clippy::as_conversions)]
-                let width = width_u16 as usize;
-                Ok(Self::Resize(Size { height, width }))
-            }
-            _ => Err(format!("Event not supported: {event:?}")),
+        } else {
+            Err(format!(
+                "Unsupported key code {code:?} or modifier {modifiers:?}"
+            ))
         }
     }
+}
 
-impl TryFrom<Event> for Edit{
+impl TryFrom<KeyEvent> for Edit{
     type Error = String;
-    fn try_from(event: Event) -> Result<Self,Self::Error>{
+    fn try_from(event: KeyEvent) -> Result<Self,Self::Error>{
         match (event.code, event.modifiers) {
             (Char(character),KeyModifiers::NONE | KeyModifiers::SHIFT) =>{
                 Ok(Self::Insert(character))
@@ -94,14 +87,14 @@ impl TryFrom<Event> for Edit{
             (Delete,KeyModifiers::NONE) => Ok(Self::Delete),
         
             
-            _ => Err(format!("Unsupported Key Code {event.code:?} or modifier {event.modifier:?}")),
+            _ => Err(format!("Unsupported Key Code {:?} or modifier {:?}",event.code,event.modifiers)),
         }
     }
 }
 
-impl TryFrom<Event> for System{
+impl TryFrom<KeyEvent> for System{
     type Error = String;
-    fn try_from(event: Event) -> Result<Self,Self::Error>{
+    fn try_from(event: KeyEvent) -> Result<Self,Self::Error>{
         let KeyEvent{
             code,modifiers,..
         } = event;
@@ -112,11 +105,11 @@ impl TryFrom<Event> for System{
                 Char('s') => Ok(Self::Save),
                 _ => Err(format!("Unsupported Control + {code:?}")),
             }
-        }else if modifiers == KeyModifiers::NONE && matches(code,KeyCode::Esc){
+        }else if modifiers == KeyModifiers::NONE && matches!(code,KeyCode::Esc){
             Ok(Self::Dismiss)
         }else{
 
-            Err(format!("Unsupported Key Code {event.code:?} or modifier {event    .modifier:?}"))
+            Err(format!("Unsupported Key Code {code:?} or modifier {modifiers:?}"))
         }
     }
 }
