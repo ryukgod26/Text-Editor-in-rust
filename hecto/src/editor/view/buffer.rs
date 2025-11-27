@@ -105,17 +105,29 @@ pub fn insert_newline(&mut self,at: Location){
         self.fileinfo.has_path()
     }
 
-    pub fn search(self, query: &str) -> Option<Location>{
-        for(line_index, index) in self.lines.iter().enumerate(){
-            if let Some(grapheme_index) = line.search(query){
+    pub fn search(self, query: &str, from: Location) -> Option<Location>{
+        for(line_index, idx) in self.lines.iter().enumerate().skip(from.line_idx){
+            let from_grapheme_idx = if line_idx == from.line_idx {
+                from.grapheme_idx
+            }else{
+                0
+            };
+            if let Some(grapheme_index) = line.search(query,from_grapheme_idx){
                 return Some(
                     Location{
-                        grapheme_index,
-                        line_index
+                        grapheme_idx,
+                        line_idx
                 });
             }
         }
-        None
+        for(line_idx, line) in self.lines.iter().enumerate().take(from.line_idx){
+            if let Some(grapheme_idx) = line.search(query, 0){
+                return Some(Location{
+                    grapheme_idx,
+                    line_idx,
+                });
+            }
+        }
     }
     
 }

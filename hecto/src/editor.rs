@@ -28,7 +28,7 @@ use self::editorcommand::{
 use commandbar::CommandBar;
 use line::Line;
 use messagebar::MessageBar;
-use position::Position;
+use position::{Position,Col,Row};
 use size::Size;
 
 
@@ -290,7 +290,7 @@ fn process_command_during_save(&mut self, command: Command){
 
 fn process_command_during_search(&mut self, command:Command) {
     match command{
-        System(Find,Save,Resize(_),Quit) | Move(_) => {}
+
 
         System(Dismiss) | Edit(Enter) => {
             self.set_prompt(PromptType::None);
@@ -305,6 +305,10 @@ fn process_command_during_search(&mut self, command:Command) {
             let query = self.command_bar.value();
             self.view.search(&query);
         }
+        
+        Move(Right | Down) => self,view.search_next(),
+
+        System(Find,Save,Resize(_),Quit) | Move(_) => {}
     }
 }
 
@@ -407,7 +411,7 @@ fn set_prompt(&mut self, prompt_type: PromptType) {
         PromptType::Save => self.command_bar.update_message("Save as: "),
         PromptType::Find => {
             self.view.enter_search();
-            self.command_bar.update_message("Find[Esc to exit]: ")
+            self.command_bar.update_message("Find[Esc to exit and Use Arrows to Move]: ")
         }
     }
 }

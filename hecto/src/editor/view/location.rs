@@ -1,4 +1,10 @@
-use crate::editor::terminal::Position;
+#[derive(Default,Copy,Clone)]
+pub struct Location{
+    pub graphene_idx: usize,
+    pub line_idx: usize,
+}
+
+/*use crate::editor::terminal::Position;
 
 #[derive(Copy,Clone,Default)]
 pub struct Location{
@@ -25,4 +31,4 @@ y: self.y.saturating_sub(other.y),
 }
 }
 
-}
+}*/
