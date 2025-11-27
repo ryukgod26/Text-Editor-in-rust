@@ -292,8 +292,19 @@ fn process_command_during_search(&mut self, command:Command) {
     match command{
         System(Find,Save,Resize(_),Quit) | Move(_) => {}
 
-        System(Dismiss) | Edit(Enter) => self.set_prompt(PromptType::Nome),
-        System(edit_command) => self.command_bar.handle_edit_command(edit_command),
+        System(Dismiss) | Edit(Enter) => {
+            self.set_prompt(PromptType::None);
+            self.view.dismiss_search();
+        }
+        Edit(Enter) => {
+            self.set_prompt(PromptType::None);
+            self.view.exit_search();
+        }
+        System(edit_command) => {
+            self.command_bar.handle_edit_command(edit_command);
+            let query = self.command_bar.value();
+            self.view.search(&query);
+        }
     }
 }
 
@@ -394,7 +405,10 @@ fn set_prompt(&mut self, prompt_type: PromptType) {
     match prompt_type{
         PromptType::None => self.message_bar.mark_redraw(true),
         PromptType::Save => self.command_bar.update_message("Save as: "),
-        PromptType::Find => self.command_bar.update_message("Find: "),
+        PromptType::Find => {
+            self.view.enter_search();
+            self.command_bar.update_message("Find[Esc to exit]: ")
+        }
     }
 }
 

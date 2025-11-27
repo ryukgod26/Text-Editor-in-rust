@@ -105,6 +105,7 @@ impl TryFrom<KeyEvent> for System{
                 Char('q') => Ok(Self::Quit),
                 Char('s') => Ok(Self::Save),
                 Char('f') => Ok(Self::Find),
+                (KeyCode::Esc) => Ok(Self::Dismiss),
                 _ => Err(format!("Unsupported Control + {code:?}")),
             }
         }else if modifiers == KeyModifiers::NONE && matches!(code,KeyCode::Esc){

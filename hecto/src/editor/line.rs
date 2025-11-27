@@ -181,8 +181,30 @@ impl Line{
 
     fn rebuild_fragments(&mut self) {
         self.fragments = Self::str_to_fragments(&self.string);
-    }    
+    }
 
+    fn byte_idx_to_grapheme_idx(&self, byte_idx: usize) -> usize{
+        for (grapheme_idx, fragment) in self.fragments.iter().enumerate(){
+            if fragment.start_byte_idx >= byte_idx {
+                return grapheme_idx;
+            }
+        }
+        #[cfg(debug_assertions)]
+        {
+            panic!("Invalid byte idx passed to convert to grapheme idx {byte_idx}");
+        }
+
+        #[cfg(debug_assertions)]
+        {
+            0
+        }
+
+    }
+
+    pub fn search(&self, query: &str) -> Option<usize>{
+        self.string.find(query)
+        .map(|byte_idx| self.byte_idx_to_grapheme_idx(byte_idx))
+    }
 }
 
 
