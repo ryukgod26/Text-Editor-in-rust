@@ -23,7 +23,7 @@ use uicomponent::UIComponent;
 use self::editorcommand::{
         Command::{self,Edit,Move,System},
         Edit::Enter,
-        System::{Dismiss,Quit,Resize,Save},
+        System::{Dismiss,Quit,Resize,Save,Find},
 };
 use commandbar::CommandBar;
 use line::Line;
@@ -45,7 +45,22 @@ title: String,
 message_bar: MessageBar,
 terminal_size: Size,
 quit_times: u8,
-command_bar: Option<CommandBar>,
+command_bar: CommandBar,
+prompt_type: PromptType,
+}
+
+#[derive(Eq,PartialEq,Default)]
+enum PromptType{
+    Find,
+    Save,
+    #[default]
+    None,
+}
+
+impl PromptType{
+    fn is_none(&self) -> bool{
+        *self == Self::None
+    }
 }
 
 impl Editor {
@@ -64,16 +79,14 @@ impl Editor {
 
         let mut editor = Self::default();
         let size = Terminal::size().unwrap_or_default();
-        editor.resize(size);
+        editor.handle_resize_command(size);
         editor
-            .message_bar
-            .update_message("HELP: Ctrl-S = save and Ctrl-Q = quit");
+            .update_message("HELP: Ctrl-S = save and Ctrl-Q = quit and Ctrl-f = find");
 
         let args: Vec<String> = env::args().collect();
         if let Some(file_name) = args.get(1) {
             if editor.view.load(file_name).is_err() {
                 editor
-                    .message_bar
                     .update_message(&format!("Error: Could not open file: {file_name}"));
             }
         }
@@ -189,47 +202,33 @@ fn evaluate_event(&mut self,event:Event)
 }
 
 fn process_command(&mut self,command: Command){
-    match command{
-        System(Quit) => {
-            if self.command_bar.is_none(){
-                self.handle_quit();
-            }
-        },
-        System(Resize(size)) => self.resize(size),
-        _ => self.reset_quit_times(),
+    
+    if let System(Resize(size)) = command {
+        self.handle_resize_command(size);
+        return;
     }
 
+    match self.prompt_type{
+        PromptType::Find => self.process_command_during_find(command),
+        PromptType::Save => self.process_command_during_save(command),
+        PromptType::None => self.process_command_no_prompt(command),
+    }
+}
+
+fn process_command_no_prompt(&mut self, command: Command){
+    if matcges!(command, System(Quit)){
+        self.handle_quit_command();
+        return;
+    }
+    self.reset_quit_times();
+
     match command{
-        System(Quit | Resize(_)) => {},
-        System(Save) => {
-            if self.command_bar.is_none(){
-                self.handle_save()
-                }
-        }
-        System(Dismiss) => {
-            if self.command_bar.is_some(){
-                self.dismiss_prompt();
-                self.message_bar.update_message("Save Aborted");
-            }
-        }
-        Edit(edit_command) => {
-            if let Some(command_bar) = &mut self.command_bar{
-                if matches!(edit_command, Enter){
-                    let filename = command_bar.value();
-                    self.dismiss_prompt();
-                    self.save(Some(&filename));
-                } else {
-                    command_bar.handle_edit_command(edit_command)
-                }
-            }else{
-            self.view.handle_edit_command(edit_command)
-            }
-        },
-        Move(move_command) => {
-            if self.command_bar.is_none(){
-            self.view.handle_move_command(move_command)
-            }
-        },
+        System(Quit | Resize(_) | Dismiss) => {}
+        System(Find) => self.set_prompt(PromptType::Find),
+        System(Save) => self.handle_save_command(),
+        Edit(edit_command) => self.view.handle_edit_command(edit_command),
+        Move(move_command) => self.view.handle_move_command(move_command),
+
     }
 }
 
@@ -250,34 +249,60 @@ fn show_prompt(&mut self) {
 
 }
 
-fn handle_save(&mut self){
+fn handle_save_command(&mut self){
     if self.view.is_file_loaded(){
         self.save(None);
     }else{
-        self.show_prompt();
+        self.set_prompt(PromptType::Save);
     }
 
 }
 
 fn save(&mut self, filename: Option<&str>) {
     let result = if let Some(name) = filename{
-        self.view.save_as(name)
+        self.save_as(name)
     } else{
-        self.view.save_file_to_disk()
+        self.view.save()
     };
-    if result.is_ok(){
-        self.message_bar.update_message("File saved successfully.");
-    }else{
-        self.message_bar.update_message("Error writing file!!!");
+    
+    if result.is_ok() {
+        self.update_message("File Saved Successfully.");
+    } else{
+        self.update_message("Error Occured While Saving File.");
+    }
+}
+
+fn process_command_during_save(&mut self, command: Command){
+    match command{
+        System(Quit,Find,Resize(_),Save) => {}
+        System(Dismiss) => {
+            self.set_prompt(PromptType::None);
+            self.update_message("Save Aborted.");
+        }
+        Edit(Enter) => {
+            let filename = self.command_bar.value();
+            self.save(Some(&filename));
+            self.set_prompt(PromptType::Nome);
+        }
+        Edit(edit_command) => self.command_bar.handle_edit_command(edit_command),
+    }
+}
+
+fn process_command_during_search(&mut self, command:Command) {
+    match command{
+        System(Find,Save,Resize(_),Quit) | Move(_) => {}
+
+        System(Dismiss) | Edit(Enter) => self.set_prompt(PromptType::Nome),
+        System(edit_command) => self.command_bar.handle_edit_command(edit_command),
     }
 }
 
 #[allow(clippy::arithmetic_side_effects)]
-fn handle_quit(&mut self){ 
+fn handle_quit_command(&mut self){ 
     if !self.view.get_status().is_modified || self.quit_times + 1 == QUIT_TIMES{
         self.should_quit = true;
     }else if self.view.get_status().is_modified{
-        self.message_bar.update_message(&format!("Warning!!! File has Some Unsaved Changes.Please Press Ctrl-Q {} more times to confirm quit",QUIT_TIMES - self.quit_times - 1 ));
+        self.update_message(&format!("Warning!!! File has Some Unsaved Changes.Please Press Ctrl-Q {} more times to confirm quit",QUIT_TIMES - self.quit_times - 1 ));
         self.quit_times += 1;
     }
 }
@@ -285,7 +310,7 @@ fn handle_quit(&mut self){
 fn reset_quit_times(&mut self){
     if self.quit_times > 0{
         self.quit_times = 0;
-        self.message_bar.update_message("");
+        self.update_message("");
     }
 }
 
@@ -297,12 +322,13 @@ if self.terminal_size.width == 0 || self.terminal_size.height == 0{
 let bottom_bar_row = self.terminal_size.height.saturating_sub(1);
 let _ = Terminal::hide_caret();
 //self.message_bar.render(self.terminal_size.height.saturating_sub(1));
-if let Some(command_bar) = &mut self.command_bar{
-command_bar.render(bottom_bar_row);
+
+if self.in_prompt(){
+    self.command_bar.render(bottom_bar_row);
+    
 }else{
     self.message_bar.render(bottom_bar_row);
 }
-
 
 if self.terminal_size.height > 1{
     self.status_bar.render(self.terminal_size.height.saturating_sub(2));
@@ -311,7 +337,7 @@ if self.terminal_size.height > 2{
     self.view.render(0);
 }
 
-let new_caret_pos = if let Some(command_bar) = &self.command_bar{
+let new_caret_pos = if self.in_prompt(){
     Position{
         row: bottom_bar_row,
         col: command_bar.caret_position_col(),
@@ -333,28 +359,20 @@ let _ = Terminal::show_caret();
 let _ = Terminal::execute();
 }
 
-fn resize(&mut self, size: Size){
+fn handle_resize_command(&mut self, size: Size){
     self.terminal_size = size;
     self.view.resize(Size{
         width: size.width,
         height: size.height.saturating_sub(2),
     });
 
-    self.message_bar.resize(Size{
+    let bar_size = Size{
         height: 1,
         width: size.width,
-    });
-
-    self.status_bar.resize(Size{
-        height: 1,
-        width: size.width,
-    });
-    if let Some(command_bar) = &mut self.command_bar{
-        command_bar.resize(Size{
-            height: 1,
-            width: size.width,
-        });
-    }
+    };
+    self.message_bar.resize(bar_size);
+    self.status_bar.resize(bar_size);
+    self.command_bar.resize(bar_size);
 }
 
 
@@ -363,6 +381,22 @@ fn resize(&mut self, size: Size){
 // let location {mut x, mut y} = self.location;
 // let Size {}
 // }
+
+fn update_message(&mut self,new_msg: &str) {
+    self.message_bar.update_message(new_msg);
+}
+
+fn in_prompt(&self) -> bool{
+    !self.prompt_type.is_none()
+}
+
+fn set_prompt(&mut self, prompt_type: PromptType) {
+    match prompt_type{
+        PromptType::None => self.message_bar.mark_redraw(true),
+        PromptType::Save => self.command_bar.update_message("Save as: "),
+        PromptType::Find => self.command_bar.update_message("Find: "),
+    }
+}
 
 }
 

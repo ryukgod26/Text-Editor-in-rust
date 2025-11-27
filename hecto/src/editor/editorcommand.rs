@@ -37,6 +37,7 @@ pub enum System{
     Resize(Size),
     Quit,
     Dismiss,
+    Find,
 }
 
 #[derive(Copy,Clone)]
@@ -103,6 +104,7 @@ impl TryFrom<KeyEvent> for System{
             match code{
                 Char('q') => Ok(Self::Quit),
                 Char('s') => Ok(Self::Save),
+                Char('f') => Ok(Self::Find),
                 _ => Err(format!("Unsupported Control + {code:?}")),
             }
         }else if modifiers == KeyModifiers::NONE && matches!(code,KeyCode::Esc){
