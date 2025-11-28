@@ -1,6 +1,6 @@
 #[derive(Default,Copy,Clone)]
 pub struct Location{
-    pub graphene_idx: usize,
+    pub grapheme_idx: usize,
     pub line_idx: usize,
 }
 

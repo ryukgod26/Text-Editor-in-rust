@@ -271,6 +271,96 @@ pub fn get_status(&self) -> DocumentStatus{
     }
     }
 
+pub fn enter_search(&mut self){
+        self.search_info = Some(SearchInfo{
+            prev_location: self.text_location,
+            prev_scroll_offset: self.scroll_offset,
+            query: None,
+        });
+    }
+
+    pub fn exit_search(&mut self){
+        self.search_info = None;
+    }
+
+    pub fn dismiss_search(&mut self){
+        if let Some(searcg_info) = &self.search_info{
+            self.text_location = search_info.prev_location;
+            self.scroll_offset = search_info.prev_scroll_offset;
+//            self.mark_redraw(true);
+            self.scroll_text_location_into_view();
+        }
+        self.search_info = None; 
+    }
+
+    pub fn search(&mut self, query: &str) {
+        if let Some(search_info) = &mut self.search_info{
+            search_info.query = Some(Line::from(query));
+        }
+        self.search_in_direction(self.text_location, SearchDirection::default());
+    }
+
+    fn search_from(&mut self, from: Location){
+        if let Some(search_info) = self.search_infol.as_ref(){
+            let query = &search_info.query;
+            if query.is_empty(){
+                return;
+            }
+            if let Some(location) = self.buffer.search(query, from){
+                self.text_location = location;
+                self.center_text_location();
+            }else{
+                #[cfg(debug_assertions)]
+                {
+                    panic!("Attenpting to search from without search info");
+                }
+            }
+
+        }
+    }
+
+    pub fn search_next(&mut self){
+        let step_right = self.get_search_query()
+            .map_or(1, |query| min(query.grapheme_count(),1) );
+        let location = Location{
+            line_idx : self.text_location.line_idx,
+            grapheme_idx : self.text_location.grapheme_idx.saturating_add(step_right),
+        };
+        self.search_in_direction(location, SearchDirection::default());
+        }
+    
+    pub fn search_prev(&mut self){
+        self.search_in_direction(self.text_location,SearchDirection::Backward);
+    }
+
+    fn get_search_query(&self) -> Option<&Line>{
+        let query = self.search_info.as_ref()
+            .and_then(|search_info| search_info.query.as_ref());
+
+        debug_assert!(query.is_some(),"Attempting to search without searchinfo present");
+    }
+
+    fn search_in_direction(&mut self, from: Location, direction: SearchDirection){
+        if let Some(location) = self.get_search_query()
+            .and_then(|query| {
+                if query.is_empty(){
+                    None
+                }else if direction == SearchDirection::Forward{
+                    self.buffer.search_forward(query,from)
+                }else{
+                    self.buffer.search_backward(query, from)
+                }
+        })
+        {
+            self.text_location = location;
+            self.center_text_location();
+        };
+    }
+    
+    pub fn search_prev(&mut self){
+        self.search_in_direction(self.text_location, SearchDirection::Backward);
+    }
+
 }
 
 
@@ -311,95 +401,6 @@ impl UIComponent for View{
     Ok(())
     }
 
-    pub fn enter_search(&mut self){
-        self.search_info = Some(SearchInfo{
-            prev_location: self.text_location,
-            prev_scroll_offset: self.scroll_offset,
-            query: None,
-        });
-    }
-
-    pub fn exit_search(&mut self){
-        self.search_info = None;
-    }
-
-    pub fn dismiss_search(&mut self){
-        if let Some(searcg_info) = &self.search_info{
-            self.text_location = search_info.prev_location;
-            self.scroll_offset = search_info.prev_scroll_offset;
-//            self.mark_redraw(true);
-            self.scroll_text_location_into_view();
-        }
-        self.search_info = None; 
-    }
-
-    fn search(&self, query: &str) {
-        if let Some(search_info) = self.search_info{
-            search_info.query = Some(Line::from(query));
-        }
-        self.search_in_direction(self.text_location, SearchDirection::default());
-    }
-
-    fn search_from(&mut self, from: Location){
-        if let Some(search_info) = self.search_infol.as_ref(){
-            let query = &search_info.query;
-            if query.is_empty(){
-                return;
-            }
-            if let Some(location) = self.buffer.search(query, from){
-                self.text_location = location;
-                self.center_text_location();
-            }else{
-                #[cfg(debug_assertions)]
-                {
-                    panic!("Attenpting to search from without search info");
-                }
-            }
-
-        }
-    }
-
-    pub fn search_next(&mut self){
-        let step_right = self.get_,search_query()
-            .map_or(|1, |query| min(query.grapheme_count(),1));
-        let location = Location{
-            line_idx : self.text_location.line_idx,
-            grapheme_idx : self.text_location.grapheme_idx.saturating_add(step_right),
-        }
-        self.search_in_direction(location, SearchDirection::default());
-        }
-    }
     
-    pub fn search_prev(&mut self){
-        self.search_in_direction(self.text_location,SearchDirection: Backward);
-    }
-
-    fn get_search_query(&self) -> Option<&Line>{
-        let query = self.search_info.as_ref()
-            .and_then(|search_info| search_info.query.as_ref());
-
-        debug_assert!(query.is_some(),"Attempting to search without searchinfo present");
-    }
-
-    fn search_in_direction(&mut self, from: Location, direction: SearchDirection){
-        if let Some(location) = self.get_search_query()
-            .and_then(|query| {
-                if query.is_empty(){
-                    None
-                }else if direction == SearchDirection::Forward{
-                    self.buffer.search_forward(query,from)
-                }else{
-                    self.buffer.search_backward(query, from)
-                }
-        })
-        {
-            self.text_location = location;
-            self.center_text_location();
-        };
-    }
-    
-    pub fn search_prev(&mut self){
-        self.search_in_direction(self.text_location, SearchDirection::Backward);
-    }
 
 }

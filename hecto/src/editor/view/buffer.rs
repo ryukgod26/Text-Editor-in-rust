@@ -35,10 +35,10 @@ self.lines.len()
 }
 
 pub fn insert_char(&mut self,character: char,at: Location){
+    debug_assert!(at_line_index <= self.height());
     if at.line_index > self.height() {
             return;
         }
-    debug_assert!(at_line_index <= self.height())
     else if at.line_index == self.height() {
         self.lines.push(Line::from(&character.to_string()));
         self.dirty = true;
@@ -119,7 +119,7 @@ pub fn insert_newline(&mut self,at: Location){
         for (line_idx,line) in self.lines.iter().enumerate()
             .cycle().skip(from.line_idx).take(self.lines.len().saturating_add(1)){
                 let from_grapheme_idx = if is_first{
-                    is_first = false,;
+                    is_first = false;
                     from.grapheme_idx
                 }else{
                     if let Some(grapheme_index) = line.search_forward(query,from_grapheme_idx){
@@ -128,21 +128,22 @@ pub fn insert_newline(&mut self,at: Location){
                             line_idx,
                         });
                     }
-                }
+                };
         }
         None
     }
 
+    //Probable Buggy Function During Crash (First Dev Note )
     pub fn search_backward(&self, query: &str, from: Location) -> Option<Location>{
         if query.is_empty(){
             return None;
         }
         let mut is_first = true;
 
-        for(ine_id, line() in self.lines.iter().enumerate()
+        for(line_id, line) in self.lines.iter().enumerate()
             .rev().cycle().skip(self.lines.len().saturating_sub(from.line_idx).saturating_sub(1))
-            .take(self.lines.len().saturating_add(1){
-                let from_grapheme_idx = is_first{
+            .take(self.lines.len().saturating_add(1)){
+                let from_grapheme_idx = if  is_first{
                     is_first = false;
                     from.grapheme_idx
                 }else{
@@ -152,8 +153,8 @@ pub fn insert_newline(&mut self,at: Location){
                 if let Some(grapheme_index) = line.search_backward(query, from_grapheme_idx)
                 {
                return Some(Location{
-                   grapheme_index,
-                   lime_index,
+                   grapheme_idx,
+                   line_idx,
                });
                 }
         }

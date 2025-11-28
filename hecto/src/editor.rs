@@ -21,7 +21,7 @@ use statusbar::StatusBar;
 use documentstatus::DocumentStatus;
 use uicomponent::UIComponent;
 use self::editorcommand::{
-        Command::{self,Edit,Move::{Left,Right,,Up,Down},System},
+        Command::{self,Edit,Move::{Left,Right,Up,Down},System},
         Edit::Enter,
         System::{Dismiss,Quit,Resize,Save,Find},
 };
@@ -279,7 +279,7 @@ fn save(&mut self, filename: Option<&str>) {
 
 fn process_command_during_save(&mut self, command: Command){
     match command{
-        System(Quit,Find,Resize(_),Save) => {}
+        System(Quit | Find | Resize(_) | Save) | Move(_)=> {}
         System(Dismiss) => {
             self.set_prompt(PromptType::None);
             self.update_message("Save Aborted.");
@@ -310,10 +310,10 @@ fn process_command_during_search(&mut self, command:Command) {
             let query = self.command_bar.value();
             self.view.search(&query);
         }
-        
-        Move(Right | Down) => self,view.search_next(),
+    
+        Move(Right | Down) => self.view.search_next(),
         Move(Left | Up ) => self.view.search_prev(),
-        System(Find,Save,Resize(_),Quit) | Move(_) => {}
+        System(Find | Save | Resize(_) | Quit) | Move(_) => {}
     }
 }
 
