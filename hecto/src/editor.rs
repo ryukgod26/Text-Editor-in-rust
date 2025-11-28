@@ -21,7 +21,7 @@ use statusbar::StatusBar;
 use documentstatus::DocumentStatus;
 use uicomponent::UIComponent;
 use self::editorcommand::{
-        Command::{self,Edit,Move,System},
+        Command::{self,Edit,Move::{Left,Right,,Up,Down},System},
         Edit::Enter,
         System::{Dismiss,Quit,Resize,Save,Find},
 };
@@ -137,10 +137,15 @@ impl Editor {
             Ok(event)=>
             self.evaluate_event(event),
             Err(err)=>{
-        #[cfg(debug_assertions)]
+            #[cfg(debug_assertions)]
                 {
                 panic!("Could not read event {err:?}");
                 }
+            #[cfg(not(debug_assertions))]
+                {
+                    let _ = err;
+                }
+
             }
             }
             let status = self.view.get_status();
@@ -307,7 +312,7 @@ fn process_command_during_search(&mut self, command:Command) {
         }
         
         Move(Right | Down) => self,view.search_next(),
-
+        Move(Left | Up ) => self.view.search_prev(),
         System(Find,Save,Resize(_),Quit) | Move(_) => {}
     }
 }
@@ -361,6 +366,8 @@ let new_caret_pos = if self.in_prompt(){
     self.view.caret_position()
 };
 
+debug_assert!(new_caret_pos.row <= self.terminal_size.height);
+debug_assert!(new_caret_pos.col <= self.terminal_size.width);
 
 /*
 if self.should_quit{

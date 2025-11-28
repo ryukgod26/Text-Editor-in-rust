@@ -10,14 +10,18 @@ pub trait UIComponent{
     fn set_size(&mut self, size: Size);
     fn render(&mut self, origin_row: usize){
         if self.needs_redraw(){
-            match self.draw(origin_row) {
-                Ok(()) => self.mark_redraw(false),
-                Err(err) => {
-                    #[cfg(debug_assertions)]
-                    {
-                        panic!("Could Not Render Component: {err:?}");
-                    }
+            if let Err(err) = self.draw(origin_row) {
+                #[cfg(debug_assertions)]
+                {
+                    panic!("Could not render Component {err:?}");
                 }
+
+                #[cfg(not(debug_assertions))]
+                {
+                    let _ = err;
+                }
+            }else{
+                self.mark_redraw(false);
             }
         }
     }
