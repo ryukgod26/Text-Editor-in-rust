@@ -2,29 +2,25 @@ mod buffer;
 mod fileinfo;
 mod location;
 mod searchinfo;
+mod searchdirection;
 
 use buffer::Buffer;
-use std::{cmp::min, fmt::Error};
-use super::{
-    editorcommand::{Edit,Move},
+use std::{cmp::min};
+use super::super::{
+    command::{Edit,Move},
     Position,Size,Terminal,
     DocumentStatus,  NAME, VERSION,
-    UIComponent,Line,Col,Row
+    Line
 };
+use super::UIComponent;
 use fileinfo::FileInfo;
 use location::Location;
 use searchinfo::SearchInfo;
-
+use searchdirection::SearchDirection;
 
 // const NAME: &str = env!("CARGO_PKG_NAME");
 // const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-#[derive(Eq,PartialEq,Default,Copy,Clone)]
-pub enum SearchDirection{
-    #[default]
-    Forward,
-    Backward,
-}
 
 #[derive(Default)]
 pub struct View{
@@ -37,8 +33,6 @@ pub struct View{
 }
 
 impl View{
-
-    
 
     fn render_line(at: usize,line_text: &str) -> Result<(),std::io::Error>{
     Terminal::print_row(at,line_text)
@@ -155,32 +149,34 @@ pub fn caret_position(&self) -> Position{
     self.text_location_to_position().saturating_sub(self.scroll_offset)
     }
 
-fn text_location_to_position(&self) -> Position{
-    let row = self.text_location.line_idx;
-    debug_assert!(row.saturating_sub(1) <= self.buffer.lines.len());
-    let col = self.buffer.lines.get(row).map_or(0,|line| {
-    line.width_until(self.text_location.grapheme_idx);
-    });
-    Position {col,row}
-    }   
-
-#[allow(clippy::arithnetic_side_effects)]
-fn move_text_location(&mut self,direction: Move){
-let Size{ height,.. } = self.size;
-
-//The Boundary Checking happens after this match
-match direction{
-    Move::Up => self.move_up(1),
-    Move::Down => self.move_down(1),
-    Move::Left => self.move_left(),
-    Move::Right => self.move_right(),
-    Move::PageUp => self.move_up(height.saturating_sub(1)),
-    Move::PageDown => self.move_down(height.saturating_sub(1)),
-    Move::Home => self.move_to_start_of_line(),
-    Move::End => self.move_to_end_of_line(),
+fn text_location_to_position(&self) -> Position {
+        let row = self.text_location.line_idx;
+        debug_assert!(row.saturating_sub(1) <= self.buffer.lines.len());
+        let col = self
+            .buffer
+            .lines
+            .get(row)
+            .map_or(0, |line| line.width_until(self.text_location.grapheme_idx));
+        Position { col, row }
     }
-self.scroll_text_location_into_view();
-}
+
+// #[allow(clippy::arithnetic_side_effects)]
+// fn move_text_location(&mut self,direction: Move){
+// let Size{ height,.. } = self.size;
+
+// //The Boundary Checking happens after this match
+// match direction{
+//     Move::Up => self.move_up(1),
+//     Move::Down => self.move_down(1),
+//     Move::Left => self.move_left(),
+//     Move::Right => self.move_right(),
+//     Move::PageUp => self.move_up(height.saturating_sub(1)),
+//     Move::PageDown => self.move_down(height.saturating_sub(1)),
+//     Move::Home => self.move_to_start_of_line(),
+//     Move::End => self.move_to_end_of_line(),
+//     }
+// self.scroll_text_location_into_view();
+// }
 
 fn move_up(&mut self,step: usize){
     self.text_location.line_idx = self.text_location.line_idx.saturating_sub(step);
@@ -281,16 +277,18 @@ pub fn enter_search(&mut self){
 
     pub fn exit_search(&mut self){
         self.search_info = None;
+        self.mark_redraw(true);
     }
 
     pub fn dismiss_search(&mut self){
-        if let Some(searcg_info) = &self.search_info{
+        if let Some(search_info) = &self.search_info{
             self.text_location = search_info.prev_location;
             self.scroll_offset = search_info.prev_scroll_offset;
 //            self.mark_redraw(true);
             self.scroll_text_location_into_view();
         }
         self.search_info = None; 
+        self.mark_redraw(true);
     }
 
     pub fn search(&mut self, query: &str) {
@@ -300,24 +298,24 @@ pub fn enter_search(&mut self){
         self.search_in_direction(self.text_location, SearchDirection::default());
     }
 
-    fn search_from(&mut self, from: Location){
-        if let Some(search_info) = self.search_infol.as_ref(){
-            let query = &search_info.query;
-            if query.is_empty(){
-                return;
-            }
-            if let Some(location) = self.buffer.search(query, from){
-                self.text_location = location;
-                self.center_text_location();
-            }else{
-                #[cfg(debug_assertions)]
-                {
-                    panic!("Attenpting to search from without search info");
-                }
-            }
+    // fn search_from(&mut self, from: Location){
+    //     if let Some(search_info) = self.search_info.as_ref(){
+    //         let query = &search_info.query;
+    //         if query.is_empty(){
+    //             return;
+    //         }
+    //         if let Some(location) = self.buffer.search(query, from){
+    //             self.text_location = location;
+    //             self.center_text_location();
+    //         }else{
+    //             #[cfg(debug_assertions)]
+    //             {
+    //                 panic!("Attenpting to search from without search info");
+    //             }
+    //         }
 
-        }
-    }
+    //     }
+    // }
 
     pub fn search_next(&mut self){
         let step_right = self.get_search_query()
@@ -338,6 +336,7 @@ pub fn enter_search(&mut self){
             .and_then(|search_info| search_info.query.as_ref());
 
         debug_assert!(query.is_some(),"Attempting to search without searchinfo present");
+        query
     }
 
     fn search_in_direction(&mut self, from: Location, direction: SearchDirection){
@@ -357,8 +356,15 @@ pub fn enter_search(&mut self){
         };
     }
     
-    pub fn search_prev(&mut self){
-        self.search_in_direction(self.text_location, SearchDirection::Backward);
+    fn center_text_location(&mut self){
+        let Size{height,width} = self.size;
+        let Position{row,col} = self.text_location_to_position();
+        let vertical_mid = height.div_ceil(2);
+        let horizontal_mid = width.div_ceil(2);
+
+        self.scroll_offset.row = row.saturating_sub(vertical_mid);
+        self.scroll_offset.col = col.saturating_sub(horizontal_mid);
+        self.mark_redraw(true);
     }
 
 }
@@ -391,7 +397,12 @@ impl UIComponent for View{
             if let Some(line) = self.buffer.lines.get(line_idx) {
                 let left = self.scroll_offset.col;
                 let right = self.scroll_offset.col.saturating_add(width);
-                Self::render_line(current_row,&line.get_visible_graphemes(left..right))?;
+                // Self::render_line(current_row,&line.get_visible_graphemes(left..right))?;
+                let query =self.search_info.as_ref()
+                    .and_then(|search_info| search_info.query.as_deref());
+                let selected_match = (self.text_location.line_idx == line_idx && query.is_some())
+                    .then_some(self.text_location.grapheme_idx);
+                Terminal::print_annotated_row(current_row,&line.get_annotated_visible_substr(left..right, query, selected_match))?;
             } else if current_row == top_third && self.buffer.is_empty(){
                 Self::render_line(current_row,&Self::build_welcome_message(width))?;
             }else{

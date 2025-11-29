@@ -1,7 +1,7 @@
-use super ::{
+use super::super::{
     Size,Terminal,
-    uicomponent::UIComponent,
 };
+use super::UIComponent;
 use std::time::{Instant,Duration};
 
 const DEFAULT_DISAPPEAR_DURATION: Duration = Duration::new(5,0);

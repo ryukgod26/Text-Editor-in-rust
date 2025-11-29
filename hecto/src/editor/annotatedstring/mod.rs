@@ -4,8 +4,8 @@ use std::{
 };
 
 pub mod annotationtype;
-mod annotation;
-mod annotatedstringpart;
+pub mod annotation;
+pub mod annotatedstringpart;
 mod annotatedstringiterator;
 
 pub use annotationtype::AnnotationType;
@@ -48,18 +48,18 @@ impl AnnotatedString{
         self.string.replace_range(start_byte_idx..end_byte_idx, new_string);
         let replace_range_len = end_byte_idx.saturating_sub(start_byte_idx);
         let shortend = new_string.len() < replace_range_len;
-        let len_diff = new_string.len().abs_diff(replace_range_len);
+        let line_diff = new_string.len().abs_diff(replace_range_len);
 
-        if len_diff == 0{
+        if line_diff == 0{
             return;
         }
 
-        self.annotation.iter_mut().for_each(|annotation| {
+        self.annotations.iter_mut().for_each(|annotation| {
             annotation.start_byte_idx = if annotation.start_byte_idx >= annotation.end_byte_idx{
                 if shortend{
-                    annotation.start_byte_idx.saturating_sub(len_diff)
+                    annotation.start_byte_idx.saturating_sub(line_diff)
                 }else{
-                    annotation.start_byte_idx.saturating_add(len_diff)
+                    annotation.start_byte_idx.saturating_add(line_diff)
                 }
             } else if annotation.start_byte_idx >= start_byte_idx{
                 if shortend{
@@ -100,15 +100,16 @@ impl AnnotatedString{
     }
 }
 
-impl Display for AnnoatedString{
+impl Display for AnnotatedString{
     fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result{
         write!(formatter,"{}",self.string)
     }
 }
 
-impl <'a> IntoIterator for &'a AnnotatedString{
+impl<'a> IntoIterator for &'a AnnotatedString{
     type Item = AnnotatedStringPart<'a>;
-    type IntoIter = AnnotatatedStringIterator<'a>;
+    type IntoIter = AnnotatedStringIterator<'a>;
+
     fn into_iter(self) -> Self::IntoIter{
         AnnotatedStringIterator{
             annotated_string: self,

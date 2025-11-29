@@ -1,4 +1,4 @@
-use super::Size;
+use super::super::Size;
 
 pub trait UIComponent{
     fn mark_redraw(&mut self,val: bool);

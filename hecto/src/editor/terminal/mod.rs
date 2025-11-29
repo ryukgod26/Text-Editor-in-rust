@@ -1,11 +1,18 @@
+mod attribute;
+
+use attribute::Attribute;
 use crossterm::terminal::{Clear, ClearType, DisableLineWrap, EnableLineWrap, EnterAlternateScreen, LeaveAlternateScreen, SetTitle, disable_raw_mode, enable_raw_mode, size};
 use crossterm::cursor::MoveTo;
 use std::io::{stdout,Write};
 //use crossterm::execute;
 use crossterm::cursor::{Hide,Show};
 use crossterm::{queue,Command};
-use crossterm::style::{Attribute, Print};
 use super::{Size,Position};
+use crossterm::style::{
+    Attribute::{Reset,Reverse},
+    Print,ResetColor,SetBackgroundColor,SetForegroundColor,
+};
+use super::AnnotatedString;
 
 pub struct Terminal{}
 
@@ -118,7 +125,40 @@ pub fn set_title(title: &str) -> Result<(),std::io::Error>{
 
 pub fn print_inverted_row(row: usize, line_str:&str) -> Result<(),std::io::Error>{
     let width = Terminal::size()?.width;
-    Self::print_row(row,&format!("{}{:width$.width$}{}",Attribute::Reverse,line_str,Attribute::Reset))
+    Self::print_row(row,&format!("{Reverse}{line_str:width$.width$}{Reset}"))
+}
+
+pub fn print_annotated_row(row: usize, annotated_string: &AnnotatedString) -> Result<(),std::io::Error>{
+    Self::move_caret_to(Position { col: 0, row })?;
+    Self::clear_current_line()?;
+    annotated_string.into_iter()
+    .try_for_each(|part| -> Result<(),std::io::Error>{
+        if let Some(annotation_type) = part.annotation_type {
+            let attribute: Attribute = annotation_type.into();
+            Self::set_attribute(&attribute)?;
+        }
+        Self::print(part.string)?;
+        Self::reset_color()?;
+        Ok(())
+    })?;
+    Ok(())
+}
+
+fn set_attribute(attribute: &Attribute) -> Result<(),std::io::Error>{
+    if let Some(foreground_color) = attribute.foreground{
+        Self::queue_command(SetForegroundColor(foreground_color))?;
+    }
+
+    if let Some(background_color) = attribute.background{
+        Self::queue_command(SetBackgroundColor(background_color))?;
+    }
+
+    Ok(())
+}
+
+fn reset_color() -> Result<(),std::io::Error>{
+    Self::queue_command(ResetColor)?;
+    Ok(())
 }
 
 }

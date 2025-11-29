@@ -1,5 +1,6 @@
 use std::cmp::min;
-use super::{editorcommand::Edit, Line, Size, Terminal, UIComponent};
+use super::super::{command::Edit, Line, Size, Terminal};
+use super::UIComponent;
 
 #[derive(Default)]
 pub struct CommandBar{
@@ -33,10 +34,10 @@ impl CommandBar{
         self.mark_redraw(true);
     }
 
-    pub fn clear_value(&mut self) {
-        self.value = Line::default();
-        self.mark_redraw(true);
-    }
+    // pub fn clear_value(&mut self) {
+    //     self.value = Line::default();
+    //     self.mark_redraw(true);
+    // }
 }
 
 impl UIComponent for CommandBar{

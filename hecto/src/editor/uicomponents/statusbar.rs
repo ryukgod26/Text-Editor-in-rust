@@ -1,9 +1,9 @@
-use super::{
+use super::super::{
     Terminal,
     Size,
-    UIComponent,
     DocumentStatus,
 };
+use super::UIComponent;
 
 #[derive(Default)]
 pub struct StatusBar{

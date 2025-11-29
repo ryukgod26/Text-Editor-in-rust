@@ -1,36 +1,34 @@
 mod terminal;
-mod view;
-mod statusbar;
 mod documentstatus;
-mod line;
-mod messagebar;
-mod uicomponent;
-mod commandbar;
+mod uicomponents;
 mod position;
 mod size;
+mod annotatedstring;
+mod command;
+mod line;
 
 use crossterm::event::{Event, KeyEvent, KeyEventKind, read};
 use terminal::Terminal;
-mod editorcommand;
-use view::View;
+
 use std::
 {
     env,panic::{set_hook,take_hook}
 };
-use statusbar::StatusBar;
+
 use documentstatus::DocumentStatus;
-use uicomponent::UIComponent;
-use self::editorcommand::{
-        Command::{self,Edit,Move::{Left,Right,Up,Down},System},
+use uicomponents::{
+    UIComponent,CommandBar,MessageBar,View,StatusBar
+};
+use self::command::{
+        Command::{self,Edit,Move,System},
         Edit::Enter,
+        Move::{Left,Right,Up,Down},
         System::{Dismiss,Quit,Resize,Save,Find},
 };
-use commandbar::CommandBar;
-use line::Line;
-use messagebar::MessageBar;
-use position::{Position,Col,Row};
+use annotatedstring::{AnnotatedString, AnnotationType};
+use position::{Position};
 use size::Size;
-
+pub use line::Line;
 
 pub const NAME: &str = env!("CARGO_PKG_NAME");
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -214,14 +212,14 @@ fn process_command(&mut self,command: Command){
     }
 
     match self.prompt_type{
-        PromptType::Find => self.process_command_during_find(command),
+        PromptType::Find => self.process_command_during_search(command),
         PromptType::Save => self.process_command_during_save(command),
         PromptType::None => self.process_command_no_prompt(command),
     }
 }
 
 fn process_command_no_prompt(&mut self, command: Command){
-    if matcges!(command, System(Quit)){
+    if matches!(command, System(Quit)){
         self.handle_quit_command();
         return;
     }
@@ -237,22 +235,21 @@ fn process_command_no_prompt(&mut self, command: Command){
     }
 }
 
-fn dismiss_prompt(&mut self){
-    self.command_bar = None;
-    self.message_bar.mark_redraw(true);
-}
+// fn dismiss_prompt(&mut self){
+//     self.command_bar = None;
+//     self.message_bar.mark_redraw(true);
+// }
 
-fn show_prompt(&mut self) {
-    let mut command_bar = CommandBar::default();
-    command_bar.set_prompt("Save as");
-    command_bar.resize(Size{
-        height: 1,
-        width: self.terminal_size.width,
-    });
-    command_bar.mark_redraw(true);
-    self.command_bar = Some(command_bar);
-
-}
+// fn show_prompt(&mut self) {
+//     let mut command_bar = CommandBar::default();
+//     command_bar.set_prompt("Save as");
+//     command_bar.resize(Size{
+//         height: 1,
+//         width: self.terminal_size.width,
+//     });
+//     command_bar.mark_redraw(true);
+//     self.command_bar = Some(command_bar);
+// }
 
 fn handle_save_command(&mut self){
     if self.view.is_file_loaded(){
@@ -265,9 +262,9 @@ fn handle_save_command(&mut self){
 
 fn save(&mut self, filename: Option<&str>) {
     let result = if let Some(name) = filename{
-        self.save_as(name)
+        self.view.save_as(name)
     } else{
-        self.view.save()
+        self.view.save_file_to_disk()
     };
     
     if result.is_ok() {
@@ -287,7 +284,7 @@ fn process_command_during_save(&mut self, command: Command){
         Edit(Enter) => {
             let filename = self.command_bar.value();
             self.save(Some(&filename));
-            self.set_prompt(PromptType::Nome);
+            self.set_prompt(PromptType::None);
         }
         Edit(edit_command) => self.command_bar.handle_edit_command(edit_command),
     }
@@ -295,8 +292,6 @@ fn process_command_during_save(&mut self, command: Command){
 
 fn process_command_during_search(&mut self, command:Command) {
     match command{
-
-
         System(Dismiss) | Edit(Enter) => {
             self.set_prompt(PromptType::None);
             self.view.dismiss_search();
@@ -305,7 +300,7 @@ fn process_command_during_search(&mut self, command:Command) {
             self.set_prompt(PromptType::None);
             self.view.exit_search();
         }
-        System(edit_command) => {
+        Edit(edit_command) => {
             self.command_bar.handle_edit_command(edit_command);
             let query = self.command_bar.value();
             self.view.search(&query);
@@ -360,7 +355,7 @@ if self.terminal_size.height > 2{
 let new_caret_pos = if self.in_prompt(){
     Position{
         row: bottom_bar_row,
-        col: command_bar.caret_position_col(),
+        col: self.command_bar.caret_position_col(),
     }
 }else{
     self.view.caret_position()
@@ -415,10 +410,10 @@ fn in_prompt(&self) -> bool{
 fn set_prompt(&mut self, prompt_type: PromptType) {
     match prompt_type{
         PromptType::None => self.message_bar.mark_redraw(true),
-        PromptType::Save => self.command_bar.update_message("Save as: "),
+        PromptType::Save => self.command_bar.set_prompt("Save as: "),
         PromptType::Find => {
             self.view.enter_search();
-            self.command_bar.update_message("Find[Esc to exit and Use Arrows to Move]: ")
+            self.command_bar.set_prompt("Find[Esc to exit and Use Arrows to Move]: ")
         }
     }
 }

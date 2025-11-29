@@ -35,43 +35,43 @@ self.lines.len()
 }
 
 pub fn insert_char(&mut self,character: char,at: Location){
-    debug_assert!(at_line_index <= self.height());
-    if at.line_index > self.height() {
+    debug_assert!(at.line_idx <= self.height());
+    if at.line_idx > self.height() {
             return;
         }
-    else if at.line_index == self.height() {
+    else if at.line_idx == self.height() {
         self.lines.push(Line::from(&character.to_string()));
         self.dirty = true;
         }
-    else if let Some(line) = self.lines.get_mut(at.line_index){
-            line.insert_char(character,at.grapheme_index);
+    else if let Some(line) = self.lines.get_mut(at.line_idx){
+            line.insert_char(character,at.grapheme_idx);
             self.dirty = true;
         }
     }
 
 pub fn delete(&mut self,at: Location){
-    if let Some(line) = self.lines.get(at.line_index) {
-            if at.grapheme_index >= line.grapheme_count() && self.height() > at.line_index.saturating_add(1){
-                let next_line = self.lines.remove(at.line_index.saturating_add(1));
+    if let Some(line) = self.lines.get(at.line_idx) {
+            if at.grapheme_idx >= line.grapheme_count() && self.height() > at.line_idx.saturating_add(1){
+                let next_line = self.lines.remove(at.line_idx.saturating_add(1));
 
                 #[allow(clippy::index_slicing)]
-                self.lines[at.line_index].append(&next_line);
+                self.lines[at.line_idx].append(&next_line);
                 self.dirty = true;
-            } else if at.grapheme_index < line.grapheme_count() {
+            } else if at.grapheme_idx < line.grapheme_count() {
                 #[allow(clippy::index_slicing)]
-                self.lines[at.line_index].delete(at.grapheme_index);
+                self.lines[at.line_idx].delete(at.grapheme_idx);
                 self.dirty = true;
             }
         }
     }
 
 pub fn insert_newline(&mut self,at: Location){
-    if at.line_index == self.height() {
+    if at.line_idx == self.height() {
         self.lines.push(Line::default());
         self.dirty = true;
-        } else if let Some(line) = self.lines.get_mut(at.line_index){
-        let new = line.split(at.grapheme_index);
-        self.lines.insert(at.line_index.saturating_add(1),new);
+        } else if let Some(line) = self.lines.get_mut(at.line_idx){
+        let new = line.split(at.grapheme_idx);
+        self.lines.insert(at.line_idx.saturating_add(1),new);
         self.dirty = true;
         }
 
@@ -111,27 +111,27 @@ pub fn insert_newline(&mut self,at: Location){
         self.fileinfo.has_path()
     }
 
-    pub fn search(self, query: &str, from: Location) -> Option<Location>{
-        if query.is_empty(){
-            return None;
-        }
-        let mut is_first = true;
-        for (line_idx,line) in self.lines.iter().enumerate()
-            .cycle().skip(from.line_idx).take(self.lines.len().saturating_add(1)){
-                let from_grapheme_idx = if is_first{
-                    is_first = false;
-                    from.grapheme_idx
-                }else{
-                    if let Some(grapheme_index) = line.search_forward(query,from_grapheme_idx){
-                        return Some(Location{
-                            grapheme_idx,
-                            line_idx,
-                        });
-                    }
-                };
-        }
-        None
-    }
+    // pub fn search(self, query: &str, from: Location) -> Option<Location>{
+    //     if query.is_empty(){
+    //         return None;
+    //     }
+    //     let mut is_first = true;
+    //     for (line_idx,line) in self.lines.iter().enumerate()
+    //         .cycle().skip(from.line_idx).take(self.lines.len().saturating_add(1)){
+    //             let from_grapheme_idx = if is_first{
+    //                 is_first = false;
+    //                 from.grapheme_idx
+    //             }else{
+    //                 if let Some(grapheme_idx) = line.search_forward(query,from_grapheme_idx){
+    //                     return Some(Location{
+    //                         grapheme_idx,
+    //                         line_idx,
+    //                     });
+    //                 }
+    //             };
+    //     }
+    //     None
+    // }
 
     //Probable Buggy Function During Crash (First Dev Note )
     pub fn search_backward(&self, query: &str, from: Location) -> Option<Location>{
@@ -140,7 +140,7 @@ pub fn insert_newline(&mut self,at: Location){
         }
         let mut is_first = true;
 
-        for(line_id, line) in self.lines.iter().enumerate()
+        for(line_idx, line) in self.lines.iter().enumerate()
             .rev().cycle().skip(self.lines.len().saturating_sub(from.line_idx).saturating_sub(1))
             .take(self.lines.len().saturating_add(1)){
                 let from_grapheme_idx = if  is_first{
@@ -150,7 +150,7 @@ pub fn insert_newline(&mut self,at: Location){
                     line.grapheme_count()
                 };
 
-                if let Some(grapheme_index) = line.search_backward(query, from_grapheme_idx)
+                if let Some(grapheme_idx) = line.search_backward(query, from_grapheme_idx)
                 {
                return Some(Location{
                    grapheme_idx,
@@ -159,6 +159,27 @@ pub fn insert_newline(&mut self,at: Location){
                 }
         }
         None
+    }
+
+    pub fn search_forward(&self, query: &str, from: Location) -> Option<Location>{
+        if query.is_empty(){
+            return None;
+        }
+        let mut is_first = true;
+        for (line_idx, line) in self.lines.iter()
+            .enumerate().cycle().skip(from.line_idx).take(self.lines.len().saturating_add(1))
+            {
+                let from_grapheme_idx = if is_first{
+                    is_first =  false;
+                    from.grapheme_idx
+                } else {
+                    0
+                };
+                if let Some(grapheme_idx) = line.search_forward(query, from_grapheme_idx){
+                    return Some(Location { grapheme_idx, line_idx });
+                }
+            }
+            None
     }
     
 }

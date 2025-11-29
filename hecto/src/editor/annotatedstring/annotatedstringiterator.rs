@@ -1,13 +1,14 @@
 use std::cmp::min;
+
 use super::{AnnotatedString, AnnotatedStringPart};
 
-pub struct AnnotatedStringIterator<`a>{
-    pub annotated_string: &`a AnnotatedString,
+pub struct AnnotatedStringIterator<'a> {
+    pub annotated_string: &'a AnnotatedString,
     pub current_idx: usize,
 }
 
-impl<`a> Iterator for AnnotatedStringIterator<`a>{
-    type Item = AnnotatedStringPart<`a>;
+impl<'a> Iterator for AnnotatedStringIterator<'a>{
+    type Item = AnnotatedStringPart<'a>;
 
     fn next(&mut self) -> Option<Self::Item>{
         if self.current_idx >= self.annotated_string.string.len(){
@@ -18,7 +19,7 @@ impl<`a> Iterator for AnnotatedStringIterator<`a>{
             .iter()
             .filter(
                 |annotation|{
-                    anootation.start_byte_idx <= self.current_idx && annotation.end_byte_idx > self.current_idx
+                    annotation.start_byte_idx <= self.current_idx && annotation.end_byte_idx > self.current_idx
         })
         .last()
         {
@@ -31,7 +32,7 @@ impl<`a> Iterator for AnnotatedStringIterator<`a>{
             });
         }
         let mut end_idx = self.annotated_string.string.len();
-        for annotation in &self.annotated_string.annotation {
+        for annotation in &self.annotated_string.annotations {
             if self.current_idx < annotation.start_byte_idx && end_idx > annotation.start_byte_idx {
             end_idx = annotation.start_byte_idx;
             }            

@@ -1,5 +1,5 @@
-type Row = usize;
-type Col = usize;
+pub type Row = usize;
+pub type Col = usize;
 
 #[derive(Copy,Clone,Default)]
 pub struct Position{
