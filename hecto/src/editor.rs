@@ -231,7 +231,6 @@ fn process_command_no_prompt(&mut self, command: Command){
         System(Save) => self.handle_save_command(),
         Edit(edit_command) => self.view.handle_edit_command(edit_command),
         Move(move_command) => self.view.handle_move_command(move_command),
-
     }
 }
 
@@ -292,7 +291,7 @@ fn process_command_during_save(&mut self, command: Command){
 
 fn process_command_during_search(&mut self, command:Command) {
     match command{
-        System(Dismiss) | Edit(Enter) => {
+        System(Dismiss) => {
             self.set_prompt(PromptType::None);
             self.view.dismiss_search();
         }

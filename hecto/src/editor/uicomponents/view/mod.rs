@@ -53,7 +53,7 @@ impl View{
 
     fn build_welcome_message(width: usize) -> String {
         if width == 0 {
-            String::new();
+            return String::new();
         }
         let welcome_message = format!("{NAME} editor -- version {VERSION}");
         let len = welcome_message.len();
@@ -66,7 +66,7 @@ impl View{
 
     pub fn handle_edit_command(&mut self,command: Edit){
     match command {
-            Edit::Insert(Char) => self.insert_char(Char),
+            Edit::Insert(character) => self.insert_char(character),
             Edit::Backspace => self.backspace(),
             Edit::Delete => self.delete(),
             Edit::Enter => self.insert_newline(),
