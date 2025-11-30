@@ -353,7 +353,7 @@ pub fn enter_search(&mut self){
         {
             self.text_location = location;
             self.center_text_location();
-        };
+        }
     }
     
     fn center_text_location(&mut self){

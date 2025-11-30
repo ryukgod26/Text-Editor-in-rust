@@ -35,16 +35,12 @@ self.lines.len()
 }
 
 pub fn insert_char(&mut self,character: char,at: Location){
-    debug_assert!(at.line_idx <= self.height());
-    if at.line_idx > self.height() {
-            return;
-        }
-    else if at.line_idx == self.height() {
-        self.lines.push(Line::from(&character.to_string()));
-        self.dirty = true;
-        }
-    else if let Some(line) = self.lines.get_mut(at.line_idx){
-            line.insert_char(character,at.grapheme_idx);
+     debug_assert!(at.line_idx <= self.height());
+        if at.line_idx == self.height() {
+            self.lines.push(Line::from(&character.to_string()));
+            self.dirty = true;
+        } else if let Some(line) = self.lines.get_mut(at.line_idx) {
+            line.insert_char(character, at.grapheme_idx);
             self.dirty = true;
         }
     }
@@ -54,11 +50,11 @@ pub fn delete(&mut self,at: Location){
             if at.grapheme_idx >= line.grapheme_count() && self.height() > at.line_idx.saturating_add(1){
                 let next_line = self.lines.remove(at.line_idx.saturating_add(1));
 
-                #[allow(clippy::index_slicing)]
+                #[allow(clippy::indexing_slicing)]
                 self.lines[at.line_idx].append(&next_line);
                 self.dirty = true;
             } else if at.grapheme_idx < line.grapheme_count() {
-                #[allow(clippy::index_slicing)]
+                #[allow(clippy::indexing_slicing)]
                 self.lines[at.line_idx].delete(at.grapheme_idx);
                 self.dirty = true;
             }

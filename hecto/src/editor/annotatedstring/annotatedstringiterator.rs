@@ -14,7 +14,8 @@ impl<'a> Iterator for AnnotatedStringIterator<'a>{
         if self.current_idx >= self.annotated_string.string.len(){
             return None;
         }
-        if let Some(annotation) = self.annotated_string
+        if let Some(annotation) = self
+            .annotated_string
             .annotations
             .iter()
             .filter(

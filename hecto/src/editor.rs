@@ -126,7 +126,6 @@ impl Editor {
      */
      self.refresh_screen();
 
-
             if self.should_quit {
                 break;
             }
@@ -198,10 +197,10 @@ fn evaluate_event(&mut self,event:Event)
             _ => false,
         };
     if should_process {
-    if let Ok(command) = Command::try_from(event) {
+        if let Ok(command) = Command::try_from(event) {
             self.process_command(command);
-    }           
-}
+        }           
+    }
 }
 
 fn process_command(&mut self,command: Command){
@@ -415,6 +414,8 @@ fn set_prompt(&mut self, prompt_type: PromptType) {
             self.command_bar.set_prompt("Find[Esc to exit and Use Arrows to Move]: ")
         }
     }
+    self.command_bar.clear_value();
+    self.prompt_type = prompt_type;
 }
 
 }
