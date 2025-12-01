@@ -1,3 +1,6 @@
+use super::super::super::AnnotatedString;
+use super::Highlighter;
+use std::ops::Range;
 use std::fs::{File,read_to_string};
 use super::Line;
 use super::Location;
@@ -6,12 +9,42 @@ use super::FileInfo;
 
 #[derive(Default)]
 pub struct Buffer{
-    pub lines :Vec<Line>,
-    pub fileinfo: FileInfo,
-    pub dirty: bool,
+    lines :Vec<Line>,
+    fileinfo: FileInfo,
+    dirty: bool,
 }
 
 impl Buffer{
+
+
+    pub const fn is_dirty(&self) -> bool{
+        self.dirty
+    }
+
+    pub const fn get_file_info(&self) -> FileInfo{
+        &self.fileinfo
+    }
+
+    pub fn grapheme_count(&self, line_idx: LineIdx) -> GraphemeIdx{
+        self.lines.get(line_idx).map_or(0, Line::grapheme_count)
+    }
+
+    pub fn width_until(&self, line_idx: LineIdx, until: GraphemeIdx) -> GraphemeIdx{
+        self.lines.get(line_idx).map_or(0, |line| line.width_until(until))
+    }
+
+    pub fn get_highlighted_string(&self, line_idx: LineIdx, range: Range<GraphemeIdx>, highlighter: &Highlighter,) -> Option<AnnotationString> {
+        self.lines.get(line_idx).map(|line| {
+            line.get_annotated_visible_substr(range, highlighter.get_annotations(line_idx))})
+        })
+    }
+
+    pub fn highlight(&self, line_idx: LineIdx, highlighter: &mut Highlighter){
+        if let Some(line) = self.lines.get(line_idx){
+            highlighter.highlight(line_idx, line);
+        }
+    }
+
 pub fn is_empty(&self) -> bool{
 self.lines.is_empty()
 }
@@ -30,7 +63,7 @@ Ok(Self{
     })
 }
 
-pub fn height(&self) -> usize {
+pub fn height(&self) -> LineIdx {
 self.lines.len()
 }
 

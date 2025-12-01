@@ -1,3 +1,5 @@
+pub mod annotationtype;
+mod annotation;
 mod terminal;
 mod documentstatus;
 mod uicomponents;
@@ -25,10 +27,12 @@ use self::command::{
         Move::{Left,Right,Up,Down},
         System::{Dismiss,Quit,Resize,Save,Find},
 };
-use annotatedstring::{AnnotatedString, AnnotationType};
+use annotatedstring::{AnnotatedString};
 use position::{Position};
 use size::Size;
 pub use line::Line;
+pub use annotationtype::AnnotationType;
+use annotation::Annotation;
 
 pub const NAME: &str = env!("CARGO_PKG_NAME");
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");

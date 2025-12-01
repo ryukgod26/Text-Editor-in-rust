@@ -4,7 +4,7 @@ use std::{
 };
 use unicode_width::UnicodeWidthStr;
 use unicode_segmentation::UnicodeSegmentation;
-use super::{AnnotatedString, AnnotationType};
+use super::{AnnotatedString, Annotation};
 
 mod textfragment;
 mod graphemewidth;
@@ -52,7 +52,7 @@ impl Line{
     }
 
     pub fn get_visible_graphemes(&self,range: Range<ColIdx> )-> String{
-        self.get_annotated_visible_substr(range,None,None).to_string()
+        self.get_annotated_visible_substr(range,None).to_string()
     // if range.start >= range.end{
     //     return String::new();
     //     }
@@ -87,13 +87,13 @@ impl Line{
 
     }*/
 
-    pub fn get_annotated_visible_substr(&self, range: Range<ColIdx>, query: Option<&str>, selected_match: Option<GraphemeIdx>) -> AnnotatedString{
+    pub fn get_annotated_visible_substr(&self, range: Range<ColIdx>, annotations: Option<&Vec<Annotation>>) -> AnnotatedString{
         if range.start >= range.end{
             return AnnotatedString::default();
         }
         
         let mut result = AnnotatedString::from(&self.string);
-
+/* How Previously I used this function to create Annotations in it 
         self.string.chars().enumerate().for_each(|idx, ch| {
             if ch.is_ascii_digit() {
                 result.add_annotation(AnnotationType::Digit, idx, idx.saturating_add(1),
@@ -122,7 +122,13 @@ impl Line{
                     }
                 );
             }
-        }
+        }*/
+
+        if let Some(annotations) = annotations{
+            for annotation in annotations{
+                result.add_annotation(annotation.annotation_type, annotation.start, annotation.end);
+            }
+        };
         let mut fragment_start = self.width();
         for fragment in self.fragments.iter().rev(){
             let fragment_end = fragment_start;
@@ -318,7 +324,7 @@ impl Line{
             .map(|(_, grapheme_idx)| *grapheme_idx)
     }
 
-    fn find_all(&self, query: &str,range: Range<ByteIdx>) -> Vec<(ByteIdx,GraphemeIdx)>{
+    pub fn find_all(&self, query: &str,range: Range<ByteIdx>) -> Vec<(ByteIdx,GraphemeIdx)>{
         let start_byte_idx = range.start;
         let end_byte_idx = range.end;
 

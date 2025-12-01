@@ -3,15 +3,13 @@ use std::{
     fmt::{self,Display},
 };
 
-pub mod annotationtype;
-pub mod annotation;
-pub mod annotatedstringpart;
+mod annotatedstringpart;
 mod annotatedstringiterator;
 
-pub use annotationtype::AnnotationType;
-use annotation::Annotation;
 use annotatedstringpart::AnnotatedStringPart;
 use annotatedstringiterator::AnnotatedStringIterator;
+
+use super::{Annotation, AnnotationType};
 
 #[derive(Default,Debug)]
 pub struct AnnotatedString{
