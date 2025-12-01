@@ -8,6 +8,7 @@ mod size;
 mod annotatedstring;
 mod command;
 mod line;
+mod filetype;
 
 use crossterm::event::{Event, KeyEvent, KeyEventKind, read};
 use terminal::Terminal;
@@ -33,6 +34,7 @@ use size::Size;
 pub use line::Line;
 pub use annotationtype::AnnotationType;
 use annotation::Annotation;
+use filetype::FileType;
 
 pub const NAME: &str = env!("CARGO_PKG_NAME");
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");

@@ -35,15 +35,16 @@ impl UIComponent for StatusBar{
     }
 
     fn draw(&mut self,origin_row: usize) -> Result<(),std::io::Error>{
+        let position_indicator = self.current_status.position_indicator_to_string();
+        let file_type = self.current_status.file_type_to_string();
+        let back_data = format!("{file_type} | {position_indicator}");
         let line_count = self.current_status.line_count_to_string();
         let modified_indicator = self.current_status.modified_indicator_to_string();
-
         let beginning = format!("{} - {line_count} {modified_indicator}",self.current_status.filename);
-        let position_indicator = self.current_status.position_indicator_to_string();
         let remaining_len = self.size.width.saturating_sub(beginning.len());
         let status = format!("{beginning}
-            {position_indicator:>remaining_len$}");
-        let to_print = if status.len() <= self.size.width {
+            {back_data:>remaining_len$}");
+        let to_print = if status.len() <= self.size.width{
             status
         }else{
             String::new()

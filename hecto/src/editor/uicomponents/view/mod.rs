@@ -256,11 +256,13 @@ pub fn save_as(&mut self, filename: &str) -> Result<(),std::io::Error>{
 }
 
 pub fn get_status(&self) -> DocumentStatus{
+    let file_info = self.buffer.get_file_info();
     DocumentStatus{
         total_lines: self.buffer.height(),
         current_line_idx: self.text_location.line_idx,
-        filename: format!("{}",self.buffer.get_file_info()),
+        filename: format!("{file_info}"),
         is_modified: self.buffer.is_dirty(),
+        file_type: file_info.get_file_type(),
     }
     }
 
