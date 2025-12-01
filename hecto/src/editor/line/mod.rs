@@ -94,6 +94,12 @@ impl Line{
         
         let mut result = AnnotatedString::from(&self.string);
 
+        self.string.chars().enumerate().for_each(|idx, ch| {
+            if ch.is_ascii_digit() {
+                result.add_annotation(AnnotationType::Digit, idx, idx.saturating_add(1),
+            }
+        });
+
         if let Some(query)= query{
             if !query.is_empty(){
                 self.find_all(query,0..self.string.len()).iter().for_each(
