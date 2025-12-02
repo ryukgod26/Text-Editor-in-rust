@@ -1,5 +1,4 @@
-use super::super::Size;
-
+use crate::prelude::*;
 pub trait UIComponent{
     fn mark_redraw(&mut self,val: bool);
     fn needs_redraw(&self) -> bool;

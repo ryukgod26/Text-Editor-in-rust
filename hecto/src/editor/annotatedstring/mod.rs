@@ -26,25 +26,25 @@ impl AnnotatedString{
     }
 
     pub fn add_annotation(&mut self, annotation_type: AnnotationType,
-        start_byte_idx: usize, end_byte_idx: usize) {
-        debug_assert!(start_byte_idx <= end_byte_idx);
+        start: usize, end: usize) {
+        debug_assert!(start <= end);
         self.annotations.push(Annotation{
             annotation_type,
-            start_byte_idx,
-            end_byte_idx,
+            start,
+            end,
         });
     }
 
-    pub fn replace(&mut self, start_byte_idx: usize, end_byte_idx: usize, new_string: &str){
-        debug_assert!(start_byte_idx <= end_byte_idx);
+    pub fn replace(&mut self, start: usize, end: usize, new_string: &str){
+        debug_assert!(start <= end);
 
-        let end_byte_idx = min(end_byte_idx,self.string.len());
-        if start_byte_idx > end_byte_idx{
+        let end = min(end,self.string.len());
+        if start > end{
             return;
         }
 
-        self.string.replace_range(start_byte_idx..end_byte_idx, new_string);
-        let replace_range_len = end_byte_idx.saturating_sub(start_byte_idx);
+        self.string.replace_range(start..end, new_string);
+        let replace_range_len = end.saturating_sub(start);
         let shortend = new_string.len() < replace_range_len;
         let line_diff = new_string.len().abs_diff(replace_range_len);
 
@@ -53,47 +53,47 @@ impl AnnotatedString{
         }
 
         self.annotations.iter_mut().for_each(|annotation| {
-            annotation.start_byte_idx = if annotation.start_byte_idx >= annotation.end_byte_idx{
+            annotation.start = if annotation.start >= annotation.end{
                 if shortend{
-                    annotation.start_byte_idx.saturating_sub(line_diff)
+                    annotation.start.saturating_sub(line_diff)
                 }else{
-                    annotation.start_byte_idx.saturating_add(line_diff)
+                    annotation.start.saturating_add(line_diff)
                 }
-            } else if annotation.start_byte_idx >= start_byte_idx{
+            } else if annotation.start >= start{
                 if shortend{
-                    max(start_byte_idx, annotation.start_byte_idx.saturating_sub(line_diff))
+                    max(start, annotation.start.saturating_sub(line_diff))
                 }else{
-                    min(end_byte_idx, annotation.start_byte_idx.saturating_add(line_diff))
+                    min(end, annotation.start.saturating_add(line_diff))
                 }
             }
             else{
-                annotation.start_byte_idx
+                annotation.start
             };
-            annotation.end_byte_idx = if annotation.end_byte_idx >= end_byte_idx{
+            annotation.end = if annotation.end >= end{
                 if shortend{
-                    annotation.end_byte_idx.saturating_sub(line_diff)
+                    annotation.end.saturating_sub(line_diff)
                 }
                 else{
-                    annotation.end_byte_idx.saturating_add(line_diff)
+                    annotation.end.saturating_add(line_diff)
                 }
-            }else if annotation.end_byte_idx >= start_byte_idx {
+            }else if annotation.end >= start {
                 if shortend{
-                    max(start_byte_idx,
-                        annotation.end_byte_idx.saturating_sub(line_diff)
+                    max(start,
+                        annotation.end.saturating_sub(line_diff)
                     )
                 } else{
-                    min(end_byte_idx,
-                        annotation.end_byte_idx.saturating_sub(line_diff)
+                    min(end,
+                        annotation.end.saturating_sub(line_diff)
                     )
                 }
             } else{
-                annotation.end_byte_idx
+                annotation.end
             }
         });
 
         self.annotations.retain(|annotation|{
-        annotation.start_byte_idx < annotation.end_byte_idx  &&
-            annotation.start_byte_idx < self.string.len()
+        annotation.start < annotation.end  &&
+            annotation.start < self.string.len()
         });
     }
 }

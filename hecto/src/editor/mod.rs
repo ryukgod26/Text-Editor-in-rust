@@ -1,10 +1,9 @@
+use crate::prelude::*;
 pub mod annotationtype;
 mod annotation;
 mod terminal;
 mod documentstatus;
 mod uicomponents;
-mod position;
-mod size;
 mod annotatedstring;
 mod command;
 mod line;
@@ -29,15 +28,11 @@ use self::command::{
         System::{Dismiss,Quit,Resize,Save,Find},
 };
 use annotatedstring::{AnnotatedString};
-use position::{Position};
-use size::Size;
 pub use line::Line;
 pub use annotationtype::AnnotationType;
 use annotation::Annotation;
 use filetype::FileType;
 
-pub const NAME: &str = env!("CARGO_PKG_NAME");
-pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 const QUIT_TIMES: u8 = 3;
 
 #[derive(Default)]
@@ -88,11 +83,9 @@ impl Editor {
             .update_message("HELP: Ctrl-S = save and Ctrl-Q = quit and Ctrl-f = find");
 
         let args: Vec<String> = env::args().collect();
-        if let Some(file_name) = args.get(1) {
-            if editor.view.load(file_name).is_err() {
+        if let Some(file_name) = args.get(1) &&  editor.view.load(file_name).is_err() {
                 editor
                     .update_message(&format!("Error: Could not open file: {file_name}"));
-            }
         }
 
         editor.refresh_status();
@@ -202,10 +195,8 @@ fn evaluate_event(&mut self,event:Event)
             Event::Resize(_, _) => true,
             _ => false,
         };
-    if should_process {
-        if let Ok(command) = Command::try_from(event) {
-            self.process_command(command);
-        }           
+    if should_process && let Ok(command) = Command::try_from(event) { 
+            self.process_command(command);           
     }
 }
 
@@ -417,7 +408,7 @@ fn set_prompt(&mut self, prompt_type: PromptType) {
         PromptType::Save => self.command_bar.set_prompt("Save as: "),
         PromptType::Find => {
             self.view.enter_search();
-            self.command_bar.set_prompt("Find[Esc to exit and Use Arrows to Move]: ")
+            self.command_bar.set_prompt("Find[Esc to exit and Use Arrows to Move]: ");
         }
     }
     self.command_bar.clear_value();

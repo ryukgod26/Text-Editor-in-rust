@@ -1,7 +1,9 @@
+use super::{GraphemeIdx,LineIdx};
+
 #[derive(Default,Copy,Clone)]
 pub struct Location{
-    pub grapheme_idx: usize,
-    pub line_idx: usize,
+    pub grapheme_idx: GraphemeIdx,
+    pub line_idx: LineIdx,
 }
 
 /*use crate::editor::terminal::Position;

@@ -6,6 +6,7 @@ use super::Line;
 use super::Location;
 use std::io::Write;
 use super::FileInfo;
+use crate::prelude::*;
 
 #[derive(Default)]
 pub struct Buffer{
@@ -21,7 +22,7 @@ impl Buffer{
         self.dirty
     }
 
-    pub const fn get_file_info(&self) -> FileInfo{
+    pub const fn get_file_info(&self) -> &FileInfo{
         &self.fileinfo
     }
 
@@ -33,11 +34,10 @@ impl Buffer{
         self.lines.get(line_idx).map_or(0, |line| line.width_until(until))
     }
 
-    pub fn get_highlighted_string(&self, line_idx: LineIdx, range: Range<GraphemeIdx>, highlighter: &Highlighter,) -> Option<AnnotationString> {
+    pub fn get_highlighted_substring(&self, line_idx: LineIdx, range: Range<GraphemeIdx>, highlighter: &Highlighter,) -> Option<AnnotatedString> {
         self.lines.get(line_idx).map(|line| {
             line.get_annotated_visible_substr(range, highlighter.get_annotations(line_idx))})
-        })
-    }
+        }
 
     pub fn highlight(&self, line_idx: LineIdx, highlighter: &mut Highlighter){
         if let Some(line) = self.lines.get(line_idx){

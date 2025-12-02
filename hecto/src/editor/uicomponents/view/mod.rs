@@ -1,6 +1,7 @@
+use crate::prelude::*;
+
 mod buffer;
 mod fileinfo;
-mod location;
 mod searchinfo;
 mod searchdirection;
 mod highlighter;
@@ -9,13 +10,12 @@ use buffer::Buffer;
 use std::{cmp::min};
 use super::super::{
     command::{Edit,Move},
-    Position,Size,Terminal,
-    DocumentStatus,  NAME, VERSION,
+    Terminal,
+    DocumentStatus,
     Line
 };
 use super::UIComponent;
 use fileinfo::FileInfo;
-use location::Location;
 use searchinfo::SearchInfo;
 use searchdirection::SearchDirection;
 use highlighter::Highlighter;
@@ -218,7 +218,7 @@ fn move_left(&mut self) {
 
 #[allow(clippy::arithmetic_side_effects)]
 fn move_right(&mut self){
-let graphene_count = self.buffer.grapheme_count(self.text_location.line_idx);
+let grapheme_count = self.buffer.grapheme_count(self.text_location.line_idx);
 if self.text_location.grapheme_idx < grapheme_count{
     self.text_location.grapheme_idx += 1;
    }
@@ -393,7 +393,7 @@ impl UIComponent for View{
 
         let query = self.search_info.as_ref().and_then(|search_info| search_info.query.as_deref());
         let selected_match = query.is_some().then_some(self.text_location);
-        let highlighter = Highlighter::new(query, selected_match);
+        let mut highlighter = Highlighter::new(query, selected_match);
 
         for current_row in 0..end_y{
             self.buffer.highlight(current_row, &mut highlighter);
@@ -417,3 +417,4 @@ impl UIComponent for View{
     
 
 }
+

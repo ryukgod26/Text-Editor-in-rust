@@ -39,10 +39,8 @@ impl Line{
         _ if width > 0 && for_str.trim().is_empty() => Some('_'),
         _ if width == 0 => {
                 let mut chars = for_str.chars();
-                if let Some(ch) = chars.next()  {
-                    if ch.is_control() && chars.next().is_none(){
-                        return Some('[');
-                    }
+                if let Some(ch) = chars.next() && ch.is_control() && chars.next().is_none()  {
+                    return Some('[');
                 }
                 Some('.')
             }
@@ -128,7 +126,7 @@ impl Line{
             for annotation in annotations{
                 result.add_annotation(annotation.annotation_type, annotation.start, annotation.end);
             }
-        };
+        }
         let mut fragment_start = self.width();
         for fragment in self.fragments.iter().rev(){
             let fragment_end = fragment_start;
@@ -151,12 +149,10 @@ impl Line{
                 break;
             }
 
-            if fragment_start >= range.start && fragment_end <= range.end{
-                if let Some(replacement) = fragment.replacement{
-                    let start_byte_idx = fragment.start_byte_idx;
-                    let end_byte_idx = start_byte_idx.saturating_add(fragment.grapheme.len());
-                    result.replace(start_byte_idx,end_byte_idx,&replacement.to_string());
-                }
+            if fragment_start >= range.start && fragment_end <= range.end && let Some(replacement) = fragment.replacement{
+                let start_byte_idx = fragment.start_byte_idx;
+                let end_byte_idx = start_byte_idx.saturating_add(fragment.grapheme.len());
+                result.replace(start_byte_idx,end_byte_idx,&replacement.to_string());
             }
         }
         result

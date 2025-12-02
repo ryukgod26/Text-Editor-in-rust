@@ -1,4 +1,4 @@
-use super::super::super::FileInfo;
+use super::super::super::FileType;
 use std::{
     fmt::{self,Display},
     path::{Path,PathBuf},
@@ -14,13 +14,13 @@ impl FileInfo{
     pub fn from(filename: &str) -> Self{
         let path = PathBuf::from(filename);
         let file_type = if path.extension()
-            .map_or(false, |ext| ext.eq_ignore_ascii_class("rs"))
+            .is_some_and(|ext| ext.eq_ignore_ascii_case("rs"))
         {
             FileType::Rust
         }
         else{
             FileType::Text
-        }
+        };
         Self{
             path: Some(path),
             file_type
