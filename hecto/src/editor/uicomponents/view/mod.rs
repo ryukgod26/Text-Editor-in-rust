@@ -248,11 +248,15 @@ fn insert_newline(&mut self){
     } 
 
 pub fn save_file_to_disk(&mut self) -> Result<(),std::io::Error>{
-    self.buffer.save()
+    self.buffer.save()?;
+    self.mark_redraw(true);
+    Ok(())
 }
 
 pub fn save_as(&mut self, filename: &str) -> Result<(),std::io::Error>{
-    self.buffer.save_as(filename)
+    self.buffer.save_as(filename)?;
+    self.mark_redraw(true);
+    Ok(())
 }
 
 pub fn get_status(&self) -> DocumentStatus{
@@ -393,9 +397,9 @@ impl UIComponent for View{
 
         let query = self.search_info.as_ref().and_then(|search_info| search_info.query.as_deref());
         let selected_match = query.is_some().then_some(self.text_location);
-        let mut highlighter = Highlighter::new(query, selected_match);
+        let mut highlighter = Highlighter::new(query, selected_match, self.buffer.get_file_info().get_file_type(),);
 
-        for current_row in 0..end_y{
+        for current_row in 0..end_y.saturating_add(scroll_top){
             self.buffer.highlight(current_row, &mut highlighter);
         }
         

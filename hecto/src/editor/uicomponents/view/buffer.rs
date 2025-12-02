@@ -36,7 +36,7 @@ impl Buffer{
 
     pub fn get_highlighted_substring(&self, line_idx: LineIdx, range: Range<GraphemeIdx>, highlighter: &Highlighter,) -> Option<AnnotatedString> {
         self.lines.get(line_idx).map(|line| {
-            line.get_annotated_visible_substr(range, highlighter.get_annotations(line_idx))})
+            line.get_annotated_visible_substr(range,Some(&highlighter.get_annotations(line_idx)))})
         }
 
     pub fn highlight(&self, line_idx: LineIdx, highlighter: &mut Highlighter){
