@@ -114,8 +114,7 @@ impl RustSyntaxHighlighter{
                 }
             } else if self.ml_comments_num == 0{
                 return None;
-            } else if char == '*' {
-                if let Some((idx,'/')) = chars.peek() {
+            } else if char == '*'  && let Some((idx,'/')) = chars.peek() {
                     self.ml_comments_num = self.ml_comments_num.saturating_sub(1);
                     if self.ml_comments_num == 0{
                         return Some(Annotation{
@@ -124,8 +123,7 @@ impl RustSyntaxHighlighter{
                             end: idx.saturating_add(1),
                         });
                     }
-                    chars.next();
-                }
+                    chars.next();        
             }
 
         }
@@ -179,6 +177,7 @@ impl RustSyntaxHighlighter{
 
 impl SyntaxHighlighter for RustSyntaxHighlighter{
     fn highlight(&mut self, line_idx: LineIdx, line: &Line){
+        debug_assert_eq!(line_idx,self.highlights.len());
         let mut result = Vec::new();
         
         let mut iterator = line.split_word_bound_indices().peekable();
@@ -192,6 +191,7 @@ impl SyntaxHighlighter for RustSyntaxHighlighter{
                 iterator.next();
             }
         }
+        
         while let Some((start_idx, _)) = iterator.next(){
             let remainder = &line[start_idx..];
             if let Some(mut annotation) = self.annotate_ml_comments(remainder)
@@ -244,7 +244,11 @@ impl SyntaxHighlighter for RustSyntaxHighlighter{
         for char in chars{
             match char{
                 '0'..='9' => prev_digit = true,
-                '_' => if !prev_digit {return false;} else {prev_digit = false;},
+                '_' => {
+                if !prev_digit 
+                    {return false;}  
+                prev_digit = false;
+                }
                 '.' => {
                     if dot_detected || e_detected || !prev_digit {
                         return false;
@@ -302,21 +306,19 @@ impl SyntaxHighlighter for RustSyntaxHighlighter{
 
     fn annotate_next_word<F>(string: &str, annotation_type: AnnotationType, validator: F) -> Option<Annotation>  where F: Fn(&str) -> bool {
        
-            if let Some(word) = string.split_word_bounds().next(){
-                if validator(word) {
+            if let Some(word) = string.split_word_bounds().next() && validator(word) {
                     return Some(Annotation{
                         annotation_type,
                         start: 0,
                         end: word.len(),
                     });
-                }
             }
         
         None
     }
 
     fn annotate_number(string: &str)  -> Option<Annotation>{
-        annotate_next_word(string, AnnotationType::Digit, is_numeric_literal)
+        annotate_next_word(string, AnnotationType::Digit, is_valid_digit)
     }
 
     fn annotate_type(string: &str) -> Option<Annotation> {
@@ -353,14 +355,12 @@ impl SyntaxHighlighter for RustSyntaxHighlighter{
 
     fn annotate_lifetime_specefier(string: &str) -> Option<Annotation>{
         let mut iter = string.split_word_bound_indices();
-        if let Some((_,"\'")) = iter.next() {
-            if let Some((idx,next_word)) = iter.next(){
+        if let Some((_,"\'")) = iter.next() && let Some((idx,next_word)) = iter.next(){
                 return Some(Annotation{
                     annotation_type: AnnotationType::LifetimeSpecefier,
                     start: 0,
                     end: idx.saturating_add(next_word.len()),
                 });
-            }
         }
         None
     }

@@ -56,10 +56,8 @@ impl <'a> SyntaxHighlighter for SearchHighlighter<'a>{
     fn highlight(&mut self, line_idx: LineIdx, line: &Line) {
         let mut result = Vec::new();
         self.highlight_matched_words(line, &mut result);
-        if let Some(selected_match) = self.selected_match{
-            if selected_match.line_idx == line_idx {
+        if let Some(selected_match) = self.selected_match && selected_match.line_idx == line_idx {
                 self.highlight_selected_match(line,&mut result);
-            }
         }
         self.highlights.insert(line_idx, result);
     }
