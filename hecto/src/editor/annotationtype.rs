@@ -3,4 +3,7 @@ pub enum AnnotationType{
     Match,
     SelectedMatch,
     Digit,
+    Keyword,
+    KnownValue,
+    Type,
 }

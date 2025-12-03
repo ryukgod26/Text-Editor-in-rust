@@ -46,6 +46,30 @@ impl From<AnnotationType> for Attribute{
                     b: 110,
                 }),
             },
+            AnnotationType::Keyword => Self{
+                foreground: Some(Color::Rgb{
+                    r: 150,
+                    g: 100,
+                    b: 237,
+                }),
+                background: None,
+            },
+            AnnotationType::Type => Self{
+                foreground: Some(Color::Rgb{
+                    r: 150,
+                    g: 250,
+                    b: 139,
+                }),
+                background: None,
+            },
+            Annotation::KnownValue => Self{
+                foreground: Some(Color::Rgb{
+                    r: 185,
+                    g: 160,
+                    b: 150,
+                }),
+                background: None,
+            }
         }
     }
 }
