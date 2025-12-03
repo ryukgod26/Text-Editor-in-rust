@@ -1,6 +1,7 @@
 use crate::prelude::*;
 use std::collections::HashMap;
 use super::{Annotation, AnnotationType, Line, SyntaxHighlighter};
+use unicode_segmentation::UnicodeSegmentation;
 
 #[derive(Default)]
 pub struct RustSyntaxHighlighter{
@@ -8,23 +9,60 @@ pub struct RustSyntaxHighlighter{
 }
 
 impl RustSyntaxHighlighter{
-    fn highlight_digits(line:&Line, result:&mut Vec<Annotation>){
-        lines.chars().enumerate().for_each( |(idx, ch)| {
-            if ch.is_ascii_digit(){
-                result.push(Annotation{
-                    annotation_type: AnnotationType::Digit,
-                    start: idx,
-                    end: idx.saturating_add(1),
-                });
+    fn is_valid_digit(word: &str)  -> bool{
+        if word.is_empty() {
+            return false;
+        }
+        let mut chars = word.chars();
+        
+        if let Some(first_char) = chars.next() && !first_char.is_ascii_digit(){
+            return false;
+        }
+
+        let mut dot_detected = false;
+        let mut e_detected = false;
+        let mut prev_digit = false;
+
+        for char in chars{
+            match char{
+                '0'..='9' => prev_digit = true,
+                '_' => if !prev_digit {false} else {prev_digit = false;},
+                '.' => {
+                    if dot_detected || e_detected || !prev_digit {
+                        return false;
+                    }
+                    dot_detected = true;
+                    prev_digit = false;
+                }
+                'e' | 'E' => {
+                    if e_detected || !prev_digit{
+                        return false;
+                    }
+                    e_detected = true;
+                    prev_digit = false;
+                }
+                _ => {
+                    return false;
+                }
+
             }
-        });
+        }
+        prev_digit    
     }
 }
 
 impl SyntaxHighlighter for RustSyntaxHighlighter{
     fn highlight(&mut self, line_idx: LineIdx, line: &Line){
         let mut result = Vec::new();
-        Self::highlight_digits(line, &mut result);
+        for(start_idx, word) in line.split_word_bound_indices(){
+            if is_valid_digit(word) {
+                result.push(Annotation{
+                    annotation_type: AnnotationType::Digit,
+                    start: start_idx,
+                    end: start_idx.saturating_add(word.len()),
+                });
+            }
+        }
         self.highlights.insert(line_idx, result);
     }
 
