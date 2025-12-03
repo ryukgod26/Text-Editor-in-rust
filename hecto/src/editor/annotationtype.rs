@@ -8,4 +8,5 @@ pub enum AnnotationType{
     Type,
     Char,
     LifetimeSpecefier,
+    Comment,
 }

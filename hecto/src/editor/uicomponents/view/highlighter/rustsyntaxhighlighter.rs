@@ -108,7 +108,8 @@ impl SyntaxHighlighter for RustSyntaxHighlighter{
         let mut iterator = line.split_word_bound_indices().peekable();
         while let Some(start_idx, _) = iterator.next(){
             let remainder = &line[start_idx..];
-            if let Some(mut annotation) = annotated_char(remainder)
+            if let Some(mut annotation) = annotate_comment(remainder)
+                .or_else(|| annotate_char(remainder)),
                 .or_else(|| annonate_number(remainder))
                 .or_else(|| annotate_keyword(remainder))
                 .or_else(|| annonate_type(remainder))
@@ -267,5 +268,15 @@ impl SyntaxHighlighter for RustSyntaxHighlighter{
             }
         }
         None
+    }
+
+    fn annotate_comment(string: &str) -> Option<Annotation>{
+        if string.starts_with("//"){
+            return Some(Annotation{
+                annotation_type: AnnotationType::Comment,
+                start: 0,
+                end: string.len(),
+            });
+         }
     }
 }
