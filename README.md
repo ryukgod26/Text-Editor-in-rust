@@ -30,6 +30,26 @@ The source lives under `hecto/src/` and the key modules are:
 - Basic navigation (arrows, page up/down, home/end), editing, and status bar.
 - Resize handling.
 
+### Advanced features
+
+- Incremental search: enter the editor's Find prompt (via the Find command) and type a query — matches are highlighted live and a selected match can be navigated. Search state, directions, and match selection are managed by the `view` highlighter components.
+- Syntax highlighting: a modular syntax highlighter system exists; a Rust-specific highlighter is included (highlighter logic lives under `uicomponents/view/highlighter`).
+- Command bar / prompt: a `CommandBar` lets the editor collect text input for save-as, find, and other prompt workflows.
+- UI components: `StatusBar`, `MessageBar`, `CommandBar` and view rendering are implemented as small components under `uicomponents`.
+- Annotated rendering: the editor uses an `AnnotatedString` abstraction to attach annotations (matches, selections, syntax tokens) to ranges for rendering.
+- Grapheme-aware buffer: lines are stored and rendered as grapheme clusters (via `unicode-segmentation`) so multi-codepoint characters behave correctly when moving the caret or editing.
+- Robust resize handling: terminal resize events are handled and the editor reflows the view and UI components.
+
+These features are implemented across these modules:
+
+- `hecto/src/editor/editor.rs` — main app loop, command processing and high-level coordination.
+- `hecto/src/editor/uicomponents/view` — view, search info, highlighters, and rendering pipeline.
+- `hecto/src/editor/uicomponents/view/highlighter` — syntax and search highlighters (including `rustsyntaxhighlighter.rs`).
+- `hecto/src/editor/line` — grapheme-aware line model and conversion helpers (byte <-> grapheme indices).
+- `hecto/src/editor/terminal.rs` — terminal wrapper (raw mode, cursor, execution buffer).
+
+If you want to modify or extend any behavior (add a new highlighter, change keybindings, or add editor commands), start in these modules.
+
 ## Build (native Linux)
 
 On a Linux machine (or WSL2) with Rust installed, from repository root:

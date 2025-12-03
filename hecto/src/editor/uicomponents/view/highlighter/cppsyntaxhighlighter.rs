@@ -1,108 +1,133 @@
-use crate::prelude::*;
+use crate:: prelude::*;
 use super::{Annotation, AnnotationType, Line, SyntaxHighlighter};
 use unicode_segmentation::UnicodeSegmentation;
 
 #[derive(Default)]
-pub struct RustSyntaxHighlighter{
+pub struct CppSyntaxHighlighter{
     highlights: Vec<Vec<Annotation>>,
     ml_comments_num: usize,
     in_ml_string: bool,
 }
 
-const KEYWORDS: [&str; 56 ]= [
-    "abstract",
-    "as",
-    "async",
-    "await",
-    "become",
-    "box",
-    "break",
-    "const",
-    "continue",
-    "crate",
-    "do",
-    "dyn",
-    "else",
-    "enum",
-    "extern",
-    "false",
-    "final",
-    "fn",
-    "for",
-    "gen",
-    "if",
-    "impl",
-    "in",
-    "let",
-    "loop",
-    "macro",
-    "macro_rulws",
-    "match",
-    "mod",
-    "move",
-    "mut",
-    "override",
-    "priv",
-    "pub",
-    "raw",
-    "ref",
-    "return",
-    "safe",
-    "self",
-    "Self",
-    "static",
-    "struct",
-    "super",
-    "trait",
-    "true",
-    "try",
-    "type",
-    "typeof",
-    "unsafe",
-    "union",
-    "unsized",
-    "use",
-    "virtual",
-    "where",
-    "while",
-    "yield",
+const KEYWORDS: [&str;67] = [
+"reflexpr",
+"register",
+"reinterpret_cast",
+"requires",
+"return",
+"short",
+"signed",
+"sizeof",
+"static",
+"static_assert",
+"static_cast",
+"struct",
+"switch",
+"synchronized",
+"template",
+"this",
+"thread_local",
+"throw",
+"true",
+"try",
+"typedef",
+"typeid",
+"typename",
+"union",
+"unsigned",
+"using",
+"virtual",
+"void",
+"volatile",
+"wchar_t",
+"while",
+"xor",
+"xor_eq",
+"final",
+"override",
+"transaction_safe",
+"transaction_safe_dynamic",
+"import",
+"module",
+"pre",
+"post",
+"trivially_relocatable_if_eligible",
+"replaceable_if_eligible",
+"if",
+"elif",
+"else",
+"endif",
+"ifdef",
+"ifndef",
+"elifdef",
+"elifndef",
+"define",
+"undef",
+"include",
+"embed",
+"line",
+"error",
+"warning",
+"pragma",
+"defined",
+"__has_include",
+"__has_cpp_attribute",
+"__has_embed",
+"export",
+"import",
+"module",
+"_Pragma"
 ];
 
-const TYPES: [&str; 22] = [
-    "i8",
-    "i16",
-    "i32",
-    "i64",
-    "i128",
-    "isize",
-    "u8",
-    "u16",
-    "u32",
-    "u64",
-    "u128",
-    "usize",
-    "f32",
-    "f64",
+const TYPES: [&str;28]  = [
     "bool",
     "char",
-    "Option",
-    "Result",
-    "String",
-    "str",
-    "Vec",
-    "HashMap",
+    "char16_t",
+    "char32_t",
+    "wchar_t",
+    "short",
+    "int",
+    "long",
+    "long long",
+    "signed",
+    "unsigned",
+    "float",
+    "double",
+    "void",
+    "size_t",
+    "ptrdiff_t",
+    "intptr_t",
+    "uintptr_t",
+    "std::string",
+    "string",
+    "std::vector",
+    "vector",
+    "std::map",
+    "map",
+    "std::set",
+    "set",
+    "std::optional",
+    "optional",
 ];
 
-const KNOWN_VALUES: [&str; 6] = [
-    "Some",
-    "None",
-    "true",
+const KNOWN_VALUES: [&str;14] = [
+    "NULL",
+    "nullptr",
     "false",
-    "Ok",
-    "Err",
+    "true",
+    "EOF",
+    "EXIT_SUCCESS",
+    "EXIT_FAILURE",
+    "M_PI",
+    "M_E",
+    "__FILE__",
+    "__LINE__",
+    "__func__",
+    "std::nullopt",
+    "std::string::npos",
 ];
 
-impl RustSyntaxHighlighter{
+impl CppSyntaxHighlighter{
     fn annotate_ml_comments(&mut self, string: &str) -> Option<Annotation>{
         let mut chars = string.char_indices().peekable();
 
@@ -175,12 +200,12 @@ impl RustSyntaxHighlighter{
     }
 }
 
-impl SyntaxHighlighter for RustSyntaxHighlighter{
-    fn highlight(&mut self, line_idx: LineIdx, line: &Line){
+impl SyntaxHighlighter for CppSyntaxHighlighter{
+    fn highlight(&mut self, line_idx: LineIdx, line: &Line) {
         debug_assert_eq!(line_idx,self.highlights.len());
         let mut result = Vec::new();
-        
         let mut iterator = line.split_word_bound_indices().peekable();
+
         if let Some(annotation) = self.intial_annotation(line){
             result.push(annotation);
 
@@ -191,7 +216,6 @@ impl SyntaxHighlighter for RustSyntaxHighlighter{
                 iterator.next();
             }
         }
-        
         while let Some((start_idx, _)) = iterator.next(){
             let remainder = &line[start_idx..];
             if let Some(mut annotation) = self.annotate_ml_comments(remainder)
@@ -217,12 +241,12 @@ impl SyntaxHighlighter for RustSyntaxHighlighter{
         self.highlights.push(result);
     }
 
-    fn get_annotations(&self, line_idx: LineIdx) -> Option<&Vec<Annotation>>{
+    fn get_annotations(&self, line_idx: LineIdx) -> Option<&Vec<Annotation>> {
         self.highlights.get(line_idx)
     }
 }
 
-    
+
  fn is_valid_digit(word: &str)  -> bool{
         if word.is_empty() {
             return false;
@@ -374,4 +398,3 @@ impl SyntaxHighlighter for RustSyntaxHighlighter{
          }
          None
     }
-

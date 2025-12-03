@@ -13,12 +13,14 @@ pub struct FileInfo{
 impl FileInfo{
     pub fn from(filename: &str) -> Self{
         let path = PathBuf::from(filename);
-        let file_type = if path.extension()
-            .is_some_and(|ext| ext.eq_ignore_ascii_case("rs"))
-        {
-            FileType::Rust
-        }
-        else{
+        let file_type = if let Some(ext) =  path.extension().and_then(|e| e.to_str()){
+            match ext.to_ascii_lowercase().as_str() {
+                "rs" => FileType::Rust,
+                "cpp" | "cc" | "cxx" | "hpp" | "hh" | "hxx"  => FileType::Cpp,
+                "c" | "h" => FileType::C,
+                _ => FileType::Text,
+            }
+        }else{
             FileType::Text
         };
         Self{

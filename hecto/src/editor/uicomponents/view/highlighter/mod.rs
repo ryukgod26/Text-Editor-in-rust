@@ -3,14 +3,20 @@ use crate::prelude::*;
 mod syntaxhighlighter;
 mod searchhighlighter;
 mod rustsyntaxhighlighter;
+mod cppsyntaxhighlighter;
+mod csyntaxhighlighter;
 
 use searchhighlighter::SearchHighlighter;
 use syntaxhighlighter::SyntaxHighlighter;
 use rustsyntaxhighlighter::RustSyntaxHighlighter;
+use cppsyntaxhighlighter::CppSyntaxHighlighter;
+use csyntaxhighlighter::CSyntaxHighlighter;
 
 fn create_syntax_highlighter(file_type: FileType) -> Option<Box<dyn SyntaxHighlighter>> {
     match file_type{
         FileType::Rust => Some(Box::<RustSyntaxHighlighter>::default()),
+        FileType::Cpp => Some(Box::<CppSyntaxHighlighter>::default()),
+        FileType::C => Some(Box::<CSyntaxHighlighter>::default()),
         FileType::Text => None,
     }
 }

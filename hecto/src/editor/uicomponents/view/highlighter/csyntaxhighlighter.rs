@@ -1,108 +1,92 @@
-use crate::prelude::*;
+use crate:: prelude::*;
 use super::{Annotation, AnnotationType, Line, SyntaxHighlighter};
 use unicode_segmentation::UnicodeSegmentation;
 
 #[derive(Default)]
-pub struct RustSyntaxHighlighter{
+pub struct CSyntaxHighlighter{
     highlights: Vec<Vec<Annotation>>,
     ml_comments_num: usize,
     in_ml_string: bool,
 }
 
-const KEYWORDS: [&str; 56 ]= [
-    "abstract",
-    "as",
-    "async",
-    "await",
-    "become",
-    "box",
+const KEYWORDS: [&str;40] = [
+    "auto",
     "break",
+    "case",
+    "char",
     "const",
     "continue",
-    "crate",
+    "default",
     "do",
-    "dyn",
+    "double",
     "else",
     "enum",
     "extern",
-    "false",
-    "final",
-    "fn",
+    "float",
     "for",
-    "gen",
+    "goto",
     "if",
-    "impl",
-    "in",
-    "let",
-    "loop",
-    "macro",
-    "macro_rulws",
-    "match",
-    "mod",
-    "move",
-    "mut",
-    "override",
-    "priv",
-    "pub",
-    "raw",
-    "ref",
+    "inline",
+    "int",
+    "long",
+    "register",
+    "restrict",
     "return",
-    "safe",
-    "self",
-    "Self",
+    "short",
+    "signed",
+    "sizeof",
     "static",
     "struct",
-    "super",
-    "trait",
-    "true",
-    "try",
-    "type",
-    "typeof",
-    "unsafe",
+    "switch",
+    "typedef",
     "union",
-    "unsized",
-    "use",
-    "virtual",
-    "where",
+    "unsigned",
+    "void",
+    "volatile",
     "while",
-    "yield",
+    "_Bool",
+    "_Complex",
+    "_Imaginary",
+    "_Alignas",
+    "_Alignof",
+    "_Noreturn",
 ];
 
-const TYPES: [&str; 22] = [
-    "i8",
-    "i16",
-    "i32",
-    "i64",
-    "i128",
-    "isize",
-    "u8",
-    "u16",
-    "u32",
-    "u64",
-    "u128",
-    "usize",
-    "f32",
-    "f64",
-    "bool",
+const TYPES: [&str;16] = [
     "char",
-    "Option",
-    "Result",
-    "String",
-    "str",
-    "Vec",
-    "HashMap",
+    "short",
+    "int",
+    "long",
+    "float",
+    "double",
+    "signed",
+    "unsigned",
+    "void",
+    "size_t",
+    "ptrdiff_t",
+    "intptr_t",
+    "uintptr_t",
+    "_Bool",
+    "_Complex",
+    "_Imaginary",
 ];
 
-const KNOWN_VALUES: [&str; 6] = [
-    "Some",
-    "None",
+const KNOWN_VALUES: [&str;12] = [
+    "NULL",
     "true",
     "false",
-    "Ok",
-    "Err",
+    "EOF",
+    "EXIT_SUCCESS",
+    "EXIT_FAILURE",
+    "RAND_MAX",
+    "INFINITY",
+    "NAN",
+    "__FILE__",
+    "__LINE__",
+    "__func__",
 ];
 
-impl RustSyntaxHighlighter{
+impl CSyntaxHighlighter{
     fn annotate_ml_comments(&mut self, string: &str) -> Option<Annotation>{
         let mut chars = string.char_indices().peekable();
 
@@ -175,12 +159,13 @@ impl RustSyntaxHighlighter{
     }
 }
 
-impl SyntaxHighlighter for RustSyntaxHighlighter{
-    fn highlight(&mut self, line_idx: LineIdx, line: &Line){
+impl SyntaxHighlighter for CSyntaxHighlighter{
+
+    fn highlight(&mut self, line_idx: LineIdx, line: &Line) {
         debug_assert_eq!(line_idx,self.highlights.len());
         let mut result = Vec::new();
-        
         let mut iterator = line.split_word_bound_indices().peekable();
+
         if let Some(annotation) = self.intial_annotation(line){
             result.push(annotation);
 
@@ -191,7 +176,6 @@ impl SyntaxHighlighter for RustSyntaxHighlighter{
                 iterator.next();
             }
         }
-        
         while let Some((start_idx, _)) = iterator.next(){
             let remainder = &line[start_idx..];
             if let Some(mut annotation) = self.annotate_ml_comments(remainder)
@@ -217,12 +201,12 @@ impl SyntaxHighlighter for RustSyntaxHighlighter{
         self.highlights.push(result);
     }
 
-    fn get_annotations(&self, line_idx: LineIdx) -> Option<&Vec<Annotation>>{
+    fn get_annotations(&self, line_idx: LineIdx) -> Option<&Vec<Annotation>> {
         self.highlights.get(line_idx)
     }
 }
 
-    
+
  fn is_valid_digit(word: &str)  -> bool{
         if word.is_empty() {
             return false;
@@ -374,4 +358,3 @@ impl SyntaxHighlighter for RustSyntaxHighlighter{
          }
          None
     }
-
