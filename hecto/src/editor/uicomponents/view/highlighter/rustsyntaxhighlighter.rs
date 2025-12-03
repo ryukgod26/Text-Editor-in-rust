@@ -106,7 +106,7 @@ impl RustSyntaxHighlighter{
     fn annotate_ml_comments(&mut self, string: &str) -> Option<Annotation>{
         let mut chars = string.char_indices().peekable();
 
-        while let Some((_, char)) = char.next() {
+        while let Some((_, char)) = chars.next() {
             if char == '/' {
                 if let Some((_,'*')) = chars.peek(){
                     self.ml_comments_num = self.ml_comments_num.saturating_add(1);
@@ -116,7 +116,7 @@ impl RustSyntaxHighlighter{
                 return None;
             } else if char == '*' {
                 if let Some((idx,'/')) = chars.peek() {
-                    self.ml_comments_num = self.ml_commrnts_num.saturating_sub(1);
+                    self.ml_comments_num = self.ml_comments_num.saturating_sub(1);
                     if self.ml_comments_num == 0{
                         return Some(Annotation{
                             annotation_type: AnnotationType::Comment,
@@ -129,16 +129,16 @@ impl RustSyntaxHighlighter{
             }
 
         }
-        (self.ml_comments_num > 0).then_some(Annoation{
-            annotation_type: AnnoationType::Comment,
+        (self.ml_comments_num > 0).then_some(Annotation{
+            annotation_type: AnnotationType::Comment,
             start: 0,
             end: string.len(),
-        });    
+        })
     }
 
-    fn annoate_string(&mut self, string: &str) -> Option<Annoation>{
-        let mut chars = string.char_imdices();
-        while let Sone((idx,char)) = chars.next(){
+    fn annotate_string(&mut self, string: &str) -> Option<Annotation>{
+        let mut chars = string.char_indices();
+        while let Some((idx,char)) = chars.next(){
             if char == '\\' && self.in_ml_string{
                 chars.next();
                 continue;
@@ -146,10 +146,10 @@ impl RustSyntaxHighlighter{
             if char == '"'{
                 if self.in_ml_string{
                     self.in_ml_string = false;
-                    return Some(Annoation{
-                        annoation_type: AnnoationType::String,
+                    return Some(Annotation{
+                        annotation_type: AnnotationType::String,
                         start: 0,
-                        emd: idx.saturating_add(1),
+                        end: idx.saturating_add(1),
                     });
                 }
                 self.in_ml_string = true;
@@ -158,18 +158,18 @@ impl RustSyntaxHighlighter{
                 return None;
             }
         }
-        self.in_ml_string.then_some(Annoation{
-            annoation_type: AnnoationType::String,
+        self.in_ml_string.then_some(Annotation{
+            annotation_type: AnnotationType::String,
             start: 0,
             end: string.len(),
-        });
+        })
     }
 
-    fn intial_annotation(&mut self, line: &Line) -> Option<Annoation>{
+    fn intial_annotation(&mut self, line: &Line) -> Option<Annotation>{
         if self.in_ml_string{
             self.annotate_string(line)
-        } else if self.ml_comment_num > 0{
-            self.annotate_ml_comment(line);
+        } else if self.ml_comments_num > 0{
+            self.annotate_ml_comments(line)
         }else{
             None
         }
@@ -194,8 +194,8 @@ impl SyntaxHighlighter for RustSyntaxHighlighter{
         }
         while let Some((start_idx, _)) = iterator.next(){
             let remainder = &line[start_idx..];
-            if let Some(mut annotation) = self.annotate_ml_comment(remainder)
-                .or_else(|| annotate_comment(remainder));
+            if let Some(mut annotation) = self.annotate_ml_comments(remainder)
+                .or_else(|| annotate_comment(remainder))
                 .or_else(|| annotate_char(remainder))
                 .or_else(|| annotate_number(remainder))
                 .or_else(|| annotate_keyword(remainder))
