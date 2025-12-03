@@ -6,6 +6,7 @@ use unicode_segmentation::UnicodeSegmentation;
 pub struct RustSyntaxHighlighter{
     highlights: Vec<Vec<Annotation>>,
     ml_comments_num: usize,
+    in_ml_string: bool,
 }
 
 const KEYWORDS: [&str; 56 ]= [
@@ -134,6 +135,46 @@ impl RustSyntaxHighlighter{
             end: string.len(),
         });    
     }
+
+    fn annoate_string(&mut self, string: &str) -> Option<Annoation>{
+        let mut chars = string.char_imdices();
+        while let Sone((idx,char)) = chars.next(){
+            if char == '\\' && self.in_ml_string{
+                chars.next();
+                continue;
+            }
+            if char == '"'{
+                if self.in_ml_string{
+                    self.in_ml_string = false;
+                    return Some(Annoation{
+                        annoation_type: AnnoationType::String,
+                        start: 0,
+                        emd: idx.saturating_add(1),
+                    });
+                }
+                self.in_ml_string = true;
+            }
+            if !self.in_ml_string{
+                return None;
+            }
+        }
+        self.in_ml_string.then_some(Annoation{
+            annoation_type: AnnoationType::String,
+            start: 0,
+            end: string.len(),
+        });
+    }
+
+    fn intial_annotation(&mut self, line: &Line) -> Option<Annoation>{
+        if self.in_ml_string{
+            self.annotate_string(line)
+        } else if self.ml_comment_num > 0{
+            self.annotate_ml_comment(line);
+        }else{
+            None
+        }
+
+    }
 }
 
 impl SyntaxHighlighter for RustSyntaxHighlighter{
@@ -141,6 +182,16 @@ impl SyntaxHighlighter for RustSyntaxHighlighter{
         let mut result = Vec::new();
         
         let mut iterator = line.split_word_bound_indices().peekable();
+        if let Some(annotation) = self.intial_annotation(line){
+            result.push(annotation);
+
+            while let Some(&(next_idx,_)) = iterator.peek(){
+                if next_idx >= annotation.end{
+                    break;
+                }
+                iterator.next();
+            }
+        }
         while let Some((start_idx, _)) = iterator.next(){
             let remainder = &line[start_idx..];
             if let Some(mut annotation) = self.annotate_ml_comment(remainder)
