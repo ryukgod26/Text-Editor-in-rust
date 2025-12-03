@@ -113,6 +113,7 @@ impl SyntaxHighlighter for RustSyntaxHighlighter{
                 .or_else(|| annotate_keyword(remainder))
                 .or_else(|| annonate_type(remainder))
                 .or_else(|| annotate_special_value(remainder))
+                .or_else(|| annotate_lifetime_specefier(remainder))
             {
                 annotation.shift(start_idx);
                 result.push(annotation);
@@ -232,7 +233,7 @@ impl SyntaxHighlighter for RustSyntaxHighlighter{
     }
 
     fn annotate_special_value(string: &str) -> Option<Annotation>{
-        Some(annotate_next_word(string, AnnotationType::SpecialValue, is_special_type)
+        Some(annotate_next_word(string, AnnotationType::KnownValue, is_special_type)
     }
 
     fn annotate_char(string: &str) -> Option<Annotation>{
@@ -248,6 +249,20 @@ impl SyntaxHighlighter for RustSyntaxHighlighter{
                     annotation_type: AnnotationType::Char,
                     start: 0,
                     end: idx.saturating_add(1),
+                });
+            }
+        }
+        None
+    }
+
+    fn annotate_lifetime_specefier(string: &str) -> Option<Annotation>{
+        let mut iter = string.split_word_bound_indices();
+        if let Some(_,"\'") = iter.next() {
+            if let Some((idx,next_word)) = iter.next(){
+                return Some(Annotation{
+                    annotation_type: AnnotationType::LifetimeSpecefier,
+                    start: 0,
+                    end: idx.saturating_add(next_word.len()),
                 });
             }
         }
