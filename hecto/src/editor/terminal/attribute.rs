@@ -62,7 +62,7 @@ impl From<AnnotationType> for Attribute{
                 }),
                 background: None,
             },
-            Annotation::KnownValue => Self{
+            AnnotationType::KnownValue => Self{
                 foreground: Some(Color::Rgb{
                     r: 185,
                     g: 160,
@@ -70,7 +70,7 @@ impl From<AnnotationType> for Attribute{
                 }),
                 background: None,
             },
-            Annotation::Char => Self{
+            AnnotationType::Char => Self{
                 foreground: Some(Color::Rgb{
                     r: 250,
                     g: 180,
@@ -78,7 +78,7 @@ impl From<AnnotationType> for Attribute{
                 }),
                 background: None,
             },
-            Annotation::LifetimeSpecefier => Self{
+            AnnotationType::LifetimeSpecefier => Self{
                 foreground: Some(Color::Rgb{
                     r: 102,
                     g: 205,
@@ -86,7 +86,7 @@ impl From<AnnotationType> for Attribute{
                 }),
                 background: None,
             },
-            Annotation::Comment => Self{
+            AnnotationType::Comment => Self{
                 foreground: Some(Color::Rgb{
                     r: 35,
                     g: 200,

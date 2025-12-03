@@ -1,6 +1,8 @@
 use super::super::super::{Annotation, AnnotationType, FileType, Line};
 use crate::prelude::*;
-mod syntaxhhighlighter;
+mod syntaxhighlighter;
+mod searchhighlighter;
+mod rustsyntaxhighlighter;
 
 use searchhighlighter::SearchHighlighter;
 use syntaxhighlighter::SyntaxHighlighter;
@@ -15,7 +17,7 @@ fn create_syntax_highlighter(file_type: FileType) -> Option<Box<dyn SyntaxHighli
 
 #[derive(Default)]
 pub struct Highlighter<'a>{
-    syntax_highlighter: Option<Box<dyn SyntaxHighlighter>,
+    syntax_highlighter: Option<Box<dyn SyntaxHighlighter>>,
     search_result_highlighter: Option<SearchHighlighter<'a>>,
 }
 
@@ -31,12 +33,12 @@ impl<'a> Highlighter<'a>{
     }
 
 
-    pub fn get_annotations(&self, line_idx: LineIdx) -> Option<&Vec<Annotations>>{
+    pub fn get_annotations(&self, line_idx: LineIdx) -> Vec<Annotation>{
         let mut result = Vec::new();
 
         if let Some(syntax_highlighter) = &self.syntax_highlighter{
             if let Some(annotations) = syntax_highlighter.get_annotations(line_idx){
-                result.extend_from_slice(annotations.iter().copied());
+                result.extend(annotations.iter().copied());
             }
         }
 
@@ -48,7 +50,7 @@ impl<'a> Highlighter<'a>{
         result
     }
 
-    pub fn highlight(&mut self, line_idx: LineIdx, line: Line){
+    pub fn highlight(&mut self, line_idx: LineIdx, line: &Line){
         if let Some(syntax_highlighter) = &mut self.syntax_highlighter{
             syntax_highlighter.highlight(line_idx, line);
         }

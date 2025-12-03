@@ -2,8 +2,10 @@ use std::collections::HashMap;
 use super::{syntaxhighlighter::SyntaxHighlighter, Annotation, AnnotationType, Line};
 use crate::prelude::*;
 
+
+
 #[derive(Default)]
-pub struxt SearchHighlighter<'a>{
+pub struct SearchHighlighter<'a>{
     matched_word: &'a str,
     selected_match: Option<Location>,
     highlights: HashMap<LineIdx, Vec<Annotation>>,
@@ -25,7 +27,7 @@ impl <'a> SearchHighlighter<'a>{
 
         line.find_all(self.matched_word, 0..line.len())
             .iter()
-            .for_each(|(start, _) {
+            .for_each(|(start, _)| {
                 result.push(Annotation{
                     annotation_type: AnnotationType::Match,
                     start: *start,
@@ -34,14 +36,14 @@ impl <'a> SearchHighlighter<'a>{
             });
     }
 
-    fn highlighted_selected_match(&self, result: &mut Vec<Annotation>){
+    fn highlight_selected_match(&self, line: &Line,result: &mut Vec<Annotation>){
         if let Some(selected_match) = self.selected_match{
-            if self.selected_match.us_empty(){
+            if self.matched_word.is_empty(){
                 return;
             }
-            let start = grapheme_idx_to_byte_idx(selected.grapheme_idx);
+            let start = line.grapheme_idx_to_byte_idx(selected_match.grapheme_idx);
             result.push(Annotation{
-                annotation_type: SelectedMatch,
+                annotation_type: AnnotationType::SelectedMatch,
                 start,
                 end: start.saturating_add(self.matched_word.len()),
             });
@@ -52,11 +54,11 @@ impl <'a> SearchHighlighter<'a>{
 
 impl <'a> SyntaxHighlighter for SearchHighlighter<'a>{
     fn highlight(&mut self, line_idx: LineIdx, line: &Line) {
-        let result = Vec:new();
-        self.highlight_matched_words(line_idx, &mut result);
+        let mut result = Vec::new();
+        self.highlight_matched_words(line, &mut result);
         if let Some(selected_match) = self.selected_match{
             if selected_match.line_idx == line_idx {
-                self.highlight_selected_match(&mut result);
+                self.highlight_selected_match(line,&mut result);
             }
         }
         self.highlights.insert(line_idx, result);
