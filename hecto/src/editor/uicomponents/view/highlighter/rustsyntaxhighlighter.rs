@@ -1,11 +1,11 @@
 use crate::prelude::*;
-use std::collections::HashMap;
 use super::{Annotation, AnnotationType, Line, SyntaxHighlighter};
 use unicode_segmentation::UnicodeSegmentation;
 
 #[derive(Default)]
 pub struct RustSyntaxHighlighter{
-    highlights: HashMap<LineIdx, Vec<Annotation>>,
+    highlights: Vec<Vec<Annotation>>,
+    ml_comments_num: usize,
 }
 
 const KEYWORDS: [&str; 56 ]= [
@@ -101,6 +101,41 @@ const KNOWN_VALUES: [&str; 6] = [
     "Err",
 ];
 
+impl RustSyntaxHighlighter{
+    fn annotate_ml_comments(&mut self, string: &str) -> Option<Annotation>{
+        let mut chars = string.char_indices().peekable();
+
+        while let Some((_, char)) = char.next() {
+            if char == '/' {
+                if let Some((_,'*')) = chars.peek(){
+                    self.ml_comments_num = self.ml_comments_num.saturating_add(1);
+                    chars.next();
+                }
+            } else if self.ml_comments_num == 0{
+                return None;
+            } else if char == '*' {
+                if let Some((idx,'/')) = chars.peek() {
+                    self.ml_comments_num = self.ml_commrnts_num.saturating_sub(1);
+                    if self.ml_comments_num == 0{
+                        return Some(Annotation{
+                            annotation_type: AnnotationType::Comment,
+                            start: 0,
+                            end: idx.saturating_add(1),
+                        });
+                    }
+                    chars.next();
+                }
+            }
+
+        }
+        (self.ml_comments_num > 0).then_some(Annoation{
+            annotation_type: AnnoationType::Comment,
+            start: 0,
+            end: string.len(),
+        });    
+    }
+}
+
 impl SyntaxHighlighter for RustSyntaxHighlighter{
     fn highlight(&mut self, line_idx: LineIdx, line: &Line){
         let mut result = Vec::new();
@@ -108,7 +143,8 @@ impl SyntaxHighlighter for RustSyntaxHighlighter{
         let mut iterator = line.split_word_bound_indices().peekable();
         while let Some((start_idx, _)) = iterator.next(){
             let remainder = &line[start_idx..];
-            if let Some(mut annotation) = annotate_comment(remainder)
+            if let Some(mut annotation) = self.annotate_ml_comment(remainder)
+                .or_else(|| annotate_comment(remainder));
                 .or_else(|| annotate_char(remainder))
                 .or_else(|| annotate_number(remainder))
                 .or_else(|| annotate_keyword(remainder))
@@ -127,11 +163,11 @@ impl SyntaxHighlighter for RustSyntaxHighlighter{
             }
             
         }
-        self.highlights.insert(line_idx, result);
+        self.highlights.push(result);
     }
 
     fn get_annotations(&self, line_idx: LineIdx) -> Option<&Vec<Annotation>>{
-        self.highlights.get(&line_idx)
+        self.highlights.get(line_idx)
     }
 }
 
