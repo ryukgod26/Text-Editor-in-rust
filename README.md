@@ -1,4 +1,4 @@
-# Red - ((Rust Editor))
+# Red - (Rust Editor)
 
 This is a small text editor created in Rust named Red (Rust Editor). I am creating this Project to learn rust because this is my first rust Project. This Text Editor is still in development. It Currently support all the common keys and basic highlighting of text in C, C++ and Rust.
 
