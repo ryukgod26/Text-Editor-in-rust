@@ -9,7 +9,8 @@ pub struct CppSyntaxHighlighter{
     in_ml_string: bool,
 }
 
-const KEYWORDS: [&str;67] = [
+const KEYWORDS: [&str;68] = [
+"std",
 "reflexpr",
 "register",
 "reinterpret_cast",

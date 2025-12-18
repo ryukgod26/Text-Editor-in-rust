@@ -9,7 +9,7 @@ pub struct CSyntaxHighlighter{
     in_ml_string: bool,
 }
 
-const KEYWORDS: [&str;40] = [
+const KEYWORDS: [&str;44] = [
     "auto",
     "break",
     "case",
@@ -50,6 +50,10 @@ const KEYWORDS: [&str;40] = [
     "_Alignas",
     "_Alignof",
     "_Noreturn",
+    "include",
+    "printf",
+    "stdin",
+    "stdout",
 ];
 
 const TYPES: [&str;16] = [
